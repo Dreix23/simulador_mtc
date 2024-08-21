@@ -1,51 +1,65 @@
 <script setup>
-import { useRouter } from 'vue-router';
-import Header from '@/components/Header.vue';
-import Footer from '@/components/Footer.vue';
-import { UserCircle, RefreshCw } from 'lucide-vue-next';
+import { useRouter } from "vue-router";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
+import { UserCircle, RefreshCw } from "lucide-vue-next";
 
 const router = useRouter();
 
 const startNewExam = () => {
-  router.push({ name: 'DocumentValidation' });
+  router.push({ name: "/validacion-documento" });
 };
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex flex-col">
-    <Header title="EXAMEN FINALIZADO" :showMenuIcon="false" @toggle-sidebar="toggleSidebar"/>
+  <div class="min-h-screen flex flex-col">
+    <Header
+      title="EXAMEN FINALIZADO"
+      :showMenuIcon="false"
+      @toggle-sidebar="toggleSidebar"
+    />
 
-    <main class="flex-grow flex items-center justify-center p-6">
-      <div class="bg-white rounded-lg shadow-md p-8 w-full max-w-md flex flex-col items-center">
-        <h1 class="text-xl font-bold text-red-600 mb-4">POSTULANTE</h1>
-        <div class="flex flex-col items-center mb-6">
-          <UserCircle class="h-24 w-24 text-gray-500 mb-4" />
-          <p class="text-gray-700">MARCOS GALVIZ MORA</p>
-          <p class="text-sm text-gray-500">CARNET DE EXTRANJERÍA</p>
+    <main
+      class="flex-grow flex flex-col items-center justify-start border-2 my-[10px] mx-[10px] rounded-[5px]"
+    >
+      <div class="h-[51px] w-full flex justify-center items-center border-b-2">
+        <h1 class="text-xl font-medium text-red-600">POSTULANTE</h1>
+      </div>
+      <div
+        class="flex flex-col gap-[28px] items-center w-full h-[244px] p-[28px] border-b-2"
+      >
+        <UserCircle class="h-[126px] w-[117px] text-gray-500" />
+        <div class="w-full text-center">
+          <p class="text-gray-700 font-medium text-size-16 uppercase">
+            MARCOS GALVIZ MORA
+          </p>
+          <p class="text-size-14 text-gray-500 uppercase">
+            CARNET DE EXTRANJERÍA
+          </p>
         </div>
+      </div>
+      <div class="h-[68px] w-full flex justify-center items-center border-b-2">
+        <h1 class="text-xl font-medium text-red-600">EXAMEN</h1>
+      </div>
 
-        <div class="w-full mb-6 text-center">
-          <h1 class="text-red-700 text-base font-semibold mb-2">EXAMEN</h1>
-          <hr class="border-t border-gray-300 my-2">
-          <div class="text-gray-700 text-sm">
-            <p>Categoría: <span class="font-semibold">A I</span></p>
-            <p>Idioma: <span class="font-semibold">Español</span></p>
-          </div>
+      <div class="h-[121px] w-full flex flex-col pt-[16px] pb-[23px] justify-between  border-b-2">
+        <div class="text-gray-700 text-size-14 text-center">
+          <p>Categoría: <span class="font-semibold">A I</span></p>
+          <p>Idioma: <span class="font-semibold">Español</span></p>
         </div>
-
-        <p class="text-center text-red-700 font-semibold mb-2">
+        <p class="text-center text-red-700 font-semibold">
           POR FAVOR, ACÉRQUESE PARA LA ENTREGA DE SU RESULTADO
         </p>
-
-        <button
-            type="button"
-            @click="startNewExam"
-            class="bg-red-700 text-white py-3 px-6 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center mt-6"
-        >
-          <RefreshCw class="h-5 w-5 mr-2" />
-          DAR UN NUEVO EXAMEN
-        </button>
       </div>
+
+      <button
+        type="button"
+        @click="startNewExam"
+        class="bg-red-700 text-white py-3 px-6 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center mt-[28px]"
+      >
+        <RefreshCw class="h-5 w-5 mr-2" />
+        DAR UN NUEVO EXAMEN
+      </button>
     </main>
 
     <Footer />

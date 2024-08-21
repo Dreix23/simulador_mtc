@@ -1,27 +1,28 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { IdCard, Hash } from 'lucide-vue-next';
-import Header from '@/components/Header.vue';
-import Footer from '@/components/Footer.vue';
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { IdCard, ChevronDown } from "lucide-vue-next";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
+import Keysvg from "@/assets/images/key.svg";
 
 const router = useRouter();
 
-const selectedDocumentType = ref('DNI');
+const selectedDocumentType = ref("DNI");
 const documentTypes = [
-  'DNI',
-  'CARNET DE EXTRANJERIA',
-  'CARNET DE SOLICITANTE DE REFUGIO',
-  'PERMISO TEMPORAL DE PERMANENCIA',
-  'CEDULA DE IDENTIDAD DIPLOMATICA'
+  "DNI",
+  "CARNET DE EXTRANJERIA",
+  "CARNET DE SOLICITANTE DE REFUGIO",
+  "PERMISO TEMPORAL DE PERMANENCIA",
+  "CEDULA DE IDENTIDAD DIPLOMATICA",
 ];
 
-const documentNumber = ref('');
+const documentNumber = ref("");
 const isMenuOpen = ref(false);
 
 const handleSubmit = () => {
-  console.log('Form submitted');
-  router.push({name: 'Profile'});
+  console.log("Form submitted");
+  router.push({ name: "Profile" });
 };
 
 const toggleMenu = () => {
@@ -34,92 +35,85 @@ const selectDocumentType = (type) => {
 };
 
 const closeMenuOnClickOutside = (event) => {
-  if (isMenuOpen.value && !event.target.closest('.document-type-dropdown')) {
+  if (isMenuOpen.value && !event.target.closest(".document-type-dropdown")) {
     isMenuOpen.value = false;
   }
 };
 
 onMounted(() => {
-  document.addEventListener('click', closeMenuOnClickOutside);
+  document.addEventListener("click", closeMenuOnClickOutside);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeMenuOnClickOutside);
+  document.removeEventListener("click", closeMenuOnClickOutside);
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex flex-col">
-    <Header title="EXAMEN DE CONOCIMIENTO - ACCESO PARA POSTULANTES" :showMenuIcon="false"
-            @toggle-sidebar="toggleSidebar"/>
+  <div class="min-h-screen bg-white flex flex-col">
+    <Header
+      title="EXAMEN DE CONOCIMIENTO - ACCESO PARA POSTULANTES"
+      :showMenuIcon="false"
+      @toggle-sidebar="toggleSidebar"
+    />
 
     <main class="flex-grow flex items-center justify-center p-6">
-      <div class="bg-white rounded-lg shadow-md p-8 w-full max-w-lg flex">
+      <div class="bg-white rounded-lg shadow-shadow-form p-8 w-full flex max-w-[455px]">
         <div class="flex items-center justify-center mr-6">
           <div class="bg-red-100 p-4 rounded-full">
-            <IdCard class="h-16 w-16 text-red-700"/>
+            <IdCard class="h-16 w-16 text-red-700" />
           </div>
         </div>
 
         <form @submit.prevent="handleSubmit" class="flex-grow">
-          <div class="mb-4 relative document-type-dropdown w-full">
-            <label for="documentType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de documento</label>
+          <div class="mb-[30px] relative document-type-dropdown w-full">
+            <label for="underline_select" class="sr-only text-black">
+              Selecciona un tipo de documento
+            </label>
             <div class="relative">
-              <button
-                  @click="toggleMenu"
-                  type="button"
-                  class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-left bg-white"
-                  aria-haspopup="listbox"
-                  :aria-expanded="isMenuOpen"
+              <select
+                id="underline_select"
+                v-model="selectedDocumentType"
+                class="block py-2.5 cursor-pointer w-full text-sm text-black bg-transparent border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-gray-200 peer pr-10"
               >
-                {{ selectedDocumentType }}
-              </button>
-              <IdCard class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
-
-              <div
-                  v-if="isMenuOpen"
-                  class="absolute left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto"
-                  role="listbox"
-              >
-                <ul class="py-1">
-                  <li
-                      v-for="type in documentTypes"
-                      :key="type"
-                      @click="selectDocumentType(type)"
-                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer transition duration-150 ease-in-out"
-                      role="option"
-                  >
-                    {{ type }}
-                  </li>
-                </ul>
-              </div>
+                <option v-for="type in documentTypes" :key="type" :value="type">
+                  {{ type }}
+                </option>
+              </select>
+              <ChevronDown
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"
+                size="16"
+              />
             </div>
           </div>
 
-          <div class="mb-6 w-full">
-            <label for="documentNumber" class="block text-sm font-medium text-gray-700 mb-1">N° de documento</label>
-            <div class="relative">
-              <input
-                  id="documentNumber"
-                  v-model="documentNumber"
-                  type="text"
-                  class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-              <Hash class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
-            </div>
+          <div class="relative z-0 mb-6">
+            <input
+              type="text"
+              id="floating_standard"
+              class="block py-2.5 px-0 w-full text-sm text-black bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-black peer"
+              placeholder=" "
+            />
+            <label
+              for="floating_standard"
+              class="absolute text-sm text-black duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-black peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:start-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto"
+            >
+              N° de documento
+            </label>
           </div>
 
           <button
-              type="submit"
-              class="w-full bg-red-700 text-white py-2 px-4 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            type="submit"
+            class="flex items-center justify-center gap-[5px] w-full bg-red-700 text-white py-2 px-4 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
+            <img :src="Keysvg" />
             Entrar
           </button>
         </form>
       </div>
     </main>
 
-    <Footer/>
+    <Footer />
   </div>
 </template>
 
