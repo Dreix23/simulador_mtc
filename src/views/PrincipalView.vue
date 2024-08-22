@@ -156,15 +156,15 @@ const handleZoom = () => {
 };
 
 const decreaseZoom = () => {
-  if (zoomLevel.value > 100) {
-    zoomLevel.value -= 1;
+  if (zoomLevel.value > 80) {
+    zoomLevel.value -= 10;
     handleZoom();
   }
 };
 
 const increaseZoom = () => {
   if (zoomLevel.value < 150) {
-    zoomLevel.value += 1;
+    zoomLevel.value += 10;
     handleZoom();
   }
 };
@@ -247,7 +247,7 @@ onMounted(() => {
     </aside>
 
     <div class="resizer" @mousedown="startResizing"></div>
-    <section class="right-pane">
+    <section class="right-pane overflow-auto">
       <div class="flex-grow p-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-2">
           <div></div>
@@ -352,14 +352,14 @@ onMounted(() => {
           </button>
         </div>
       </div>
-      <!-- Barra de zoom -->
-      <div class="zoom-bar absolute bottom-[50px] right-4 flex items-center">
+       <!-- Barra de zoom -->
+    <div class="zoom-bar mb-[15px]  right-4 flex justify-end items-center">
         <span class="mr-[18px]">{{ zoomLevel }}%</span>
         <CircleMinus @click="decreaseZoom" class="mr-2 cursor-pointer" />
         <input
           type="range"
           id="zoomRange"
-          min="100"
+          min="80"
           max="130"
           v-model="zoomLevel"
           @input="handleZoom"
@@ -368,6 +368,7 @@ onMounted(() => {
         <CirclePlus @click="increaseZoom" class="mr-2 cursor-pointer" />
       </div>
     </section>
+   
   </main>
 
   <Footer />

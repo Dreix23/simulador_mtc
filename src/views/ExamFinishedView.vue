@@ -3,6 +3,7 @@ import { useRouter } from "vue-router";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import { UserCircle, RefreshCw } from "lucide-vue-next";
+import btnFin from "@/assets/images/btn-fin.svg"
 
 const router = useRouter();
 
@@ -47,7 +48,7 @@ const startNewExam = () => {
           <p>Categoría: <span class="font-semibold">A I</span></p>
           <p>Idioma: <span class="font-semibold">Español</span></p>
         </div>
-        <p class="text-center text-red-700 font-semibold">
+        <p class="text-center text-color-gray font-semibold">
           POR FAVOR, ACÉRQUESE PARA LA ENTREGA DE SU RESULTADO
         </p>
       </div>
@@ -57,7 +58,8 @@ const startNewExam = () => {
         @click="startNewExam"
         class="bg-red-700 text-white py-3 px-6 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center mt-[28px]"
       >
-        <RefreshCw class="h-5 w-5 mr-2" />
+        <!-- <RefreshCw class="h-5 w-5 mr-2" /> -->
+         <img :src="btnFin" alt="" class="h-5 w-5 mr-2">
         DAR UN NUEVO EXAMEN
       </button>
     </main>

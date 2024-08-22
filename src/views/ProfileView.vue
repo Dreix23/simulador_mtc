@@ -13,23 +13,23 @@ const startExam = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white flex flex-col">
+  <div class="min-h-screen h-screen bg-white flex flex-col">
     <Header
       title="EXAMEN DE CONOCIMIENTOS"
       :showMenuIcon="false"
       @toggle-sidebar="toggleSidebar"
     />
 
-    <main class="flex-grow flex items-start justify-center p-6">
+    <main class="flex-grow flex items-center justify-center p-6 overflow-auto">
       <div
-        class="bg-white rounded-lg p-8 px-[90px] w-full max-w-md flex flex-col items-center"
+        class="bg-white rounded-lg p-2 px-[90px] w-full max-w-md flex flex-col items-center"
       >
         <h1
           class="text-xl font-normal text-red-600 mb-[27px] uppercase w-full text-center pb-[7px] border-b-2"
         >
           Postulante
         </h1>
-        <div class="flex flex-col gap-[27px] items-center mb-[40px]">
+        <div class="flex flex-col gap-[27px] items-center mb-[30px]">
           <img
             :src="PerfilImg"
             alt=""
@@ -53,7 +53,7 @@ const startExam = () => {
           </div>
         </div>
 
-        <div class="w-full text-center  mb-[41px]">
+        <div class="w-full text-center mb-[20px]">
           <h4 class="text-color-gray font-normal text-size-20 mb-[10px]">
             Examen de Conocimientos
           </h4>

@@ -57,16 +57,16 @@ onUnmounted(() => {
       @toggle-sidebar="toggleSidebar"
     />
 
-    <main class="flex-grow flex items-center justify-center p-6">
-      <div class="bg-white rounded-lg shadow-shadow-form p-8 w-full flex max-w-[455px]">
-        <div class="flex items-center justify-center mr-6">
+    <main class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8">
+      <div class="bg-white rounded-lg shadow-shadow-form p-6 md:p-8 lg:p-10 w-full flex flex-col md:flex-row max-w-sm md:max-w-md lg:max-w-lg">
+        <div class="flex items-center justify-center mb-6 md:mb-0 md:mr-6">
           <div class="bg-red-100 p-4 rounded-full">
             <IdCard class="h-16 w-16 text-red-700" />
           </div>
         </div>
 
         <form @submit.prevent="handleSubmit" class="flex-grow">
-          <div class="mb-[30px] relative document-type-dropdown w-full">
+          <div class="mb-6 relative document-type-dropdown w-full">
             <label for="underline_select" class="sr-only text-black">
               Selecciona un tipo de documento
             </label>
@@ -104,7 +104,7 @@ onUnmounted(() => {
 
           <button
             type="submit"
-            class="flex items-center justify-center gap-[5px] w-full bg-red-700 text-white py-2 px-4 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            class="flex items-center justify-center gap-1 md:gap-2 w-full bg-red-700 text-white py-2 px-4 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             <img :src="Keysvg" />
             Entrar
