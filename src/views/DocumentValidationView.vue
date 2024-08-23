@@ -5,7 +5,7 @@ import { IdCard, ChevronDown } from "lucide-vue-next";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import Keysvg from "@/assets/images/key.svg";
-
+import Cardsvg from "@/assets/images/card.svg";
 const router = useRouter();
 
 const selectedDocumentType = ref("DNI");
@@ -22,7 +22,7 @@ const isMenuOpen = ref(false);
 
 const handleSubmit = () => {
   console.log("Form submitted");
-  router.push({ name: "Profile" });
+  // router.push({ name: "Profile" });
 };
 
 const toggleMenu = () => {
@@ -58,15 +58,18 @@ onUnmounted(() => {
     />
 
     <main class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8">
-      <div class="bg-white rounded-lg shadow-shadow-form p-6 md:p-8 lg:p-10 w-full flex flex-col md:flex-row max-w-sm md:max-w-md lg:max-w-lg">
+      <div
+        class="bg-white w-[375px] shadow-shadow-form rounded-[9px] flex gap[45px] px-[34px] pt-[56px] pb-[35px]"
+      >
         <div class="flex items-center justify-center mb-6 md:mb-0 md:mr-6">
-          <div class="bg-red-100 p-4 rounded-full">
-            <IdCard class="h-16 w-16 text-red-700" />
-          </div>
+          <img :src="Cardsvg" alt="" />
         </div>
 
-        <form @submit.prevent="handleSubmit" class="flex-grow">
-          <div class="mb-6 relative document-type-dropdown w-full">
+        <form
+          @submit.prevent="handleSubmit"
+          class="flex flex-col items-center w-full"
+        >
+          <div class="mb-[33px] relative document-type-dropdown w-full">
             <label for="underline_select" class="sr-only text-black">
               Selecciona un tipo de documento
             </label>
@@ -76,7 +79,13 @@ onUnmounted(() => {
                 v-model="selectedDocumentType"
                 class="block py-2.5 cursor-pointer w-full text-sm text-black bg-transparent border-0 border-b-2 border-gray-200 appearance-none focus:outline-none focus:ring-0 focus:border-gray-200 peer pr-10"
               >
-                <option v-for="type in documentTypes" :key="type" :value="type">
+                <option
+                  v-for="type in documentTypes"
+                  :key="type"
+                  :value="type"
+                  class="py-[2.5px]"
+                  style="margin-bottom: 5px"
+                >
                   {{ type }}
                 </option>
               </select>
@@ -87,7 +96,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="relative z-0 mb-6">
+          <div class="relative z-0 mb-[14px] w-full">
             <input
               type="text"
               id="floating_standard"
@@ -104,9 +113,9 @@ onUnmounted(() => {
 
           <button
             type="submit"
-            class="flex items-center justify-center gap-1 md:gap-2 w-full bg-red-700 text-white py-2 px-4 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            class="flex items-center justify-center gap-1 md:gap-2 w-[122px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
-            <img :src="Keysvg" />
+            <span class="icon-[mdi--key]"></span>
             Entrar
           </button>
         </form>

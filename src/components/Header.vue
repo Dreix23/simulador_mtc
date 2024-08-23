@@ -22,21 +22,24 @@ const toggleSidebar = () => {
 
 <template>
   <header
-    class="bg-red-700 text-white py-2 h-[90px] px-2 flex items-center relative"
+    class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between"
   >
+    <div class="w-[250px]"></div>
     <button v-if="showMenuIcon" @click="toggleSidebar" class="mr-0">
       <Menu class="w-6 h-6" />
     </button>
     <h2
-      class="text-xl font-normal whitespace-nowrap overflow-hidden text-ellipsis text-center w-full min-w-0"
+      class="text-[22px] tracking-[-0.88px] font-normal whitespace-pre-wrap  text-center"
     >
       {{ title }}
     </h2>
-    <img
-      src="@/assets/images/logo-mtc.png"
-      alt="MTC Logo"
-      class="h-10 w-auto absolute right-2 py-1 object-contain"
-    />
+    <div class="h-[54px] w-[250px] flex justify-end">
+      <img
+        src="@/assets/images/logo-mtc.png"
+        alt="MTC Logo"
+        class="w-full right-2 py-1 object-contain"
+      />
+    </div>
   </header>
 </template>
 

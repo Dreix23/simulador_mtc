@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+const { addDynamicIconSelectors } = require("@iconify/tailwind");
 export default {
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
   theme: {
@@ -13,14 +14,14 @@ export default {
         "size-18": "18px",
         "size-20": "20px",
       },
-      colors:{
+      colors: {
         "color-gray": "#5B5555",
       },
       boxShadow: {
-        'shadow-form': '0px 0px 15.4px 0px rgba(0, 0, 0, 0.25)',
-        'shadow-btn': '2px 3px 2.8px 0px rgba(0, 0, 0, 0.25);'
-      }
+        "shadow-form": "0px 0px 10.2px 0px rgba(0, 0, 0, 0.75);",
+        "shadow-btn": "5px 4px 6.7px 0px #000;",
+      },
     },
   },
-  plugins: [],
+  plugins: [addDynamicIconSelectors()],
 };
