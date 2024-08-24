@@ -16,11 +16,16 @@ export default {
       },
       colors: {
         "color-gray": "#5B5555",
+        "color-gray-line": "#E0E0E0",
+        "color-red": "#D25353",
       },
       boxShadow: {
         "shadow-form": "0px 0px 10.2px 0px rgba(0, 0, 0, 0.75);",
         "shadow-btn": "5px 4px 6.7px 0px #000;",
       },
+      border:{
+        "line": "border: 1px #E0E0E0;",
+      }
     },
   },
   plugins: [addDynamicIconSelectors()],

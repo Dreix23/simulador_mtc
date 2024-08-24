@@ -22,7 +22,7 @@ const isMenuOpen = ref(false);
 
 const handleSubmit = () => {
   console.log("Form submitted");
-  // router.push({ name: "Profile" });
+  router.push({ name: "Profile" });
 };
 
 const toggleMenu = () => {
@@ -57,12 +57,12 @@ onUnmounted(() => {
         @toggle-sidebar="toggleSidebar"
     />
 
-    <main class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8">
+    <main class="flex-grow flex items-center justify-center ">
       <div
-          class="bg-white w-[375px] shadow-shadow-form rounded-[9px] flex gap-[45px] px-[34px] pt-[56px] pb-[35px]"
+          class="bg-white w-[375px] shadow-shadow-form items-center rounded-[9px] flex gap-[45px]  px-[34px] pt-[56px] pb-[35px]"
       >
-        <div class="flex items-center justify-center mb-6 md:mb-0 md:mr-6">
-          <img :src="Cardsvg" alt="" />
+        <div class="w-[57px] h-[48px]">
+          <img :src="Cardsvg" alt="" class="w-[57px]"/>
         </div>
 
         <form

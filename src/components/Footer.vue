@@ -20,7 +20,7 @@ onMounted(() => {
 
 <template>
   <footer
-    class="bg-red-700 text-white px-[10px] text-sm flex justify-between items-center text-size-11 h-[30px]"
+    class="bg-red-700 text-white px-[10px] text-sm fixed bottom-0 w-full flex justify-between items-center text-size-11 h-[30px]"
   >
     <div class="flex flex-row items-center h-full">
       <div class="flex items-center gap-[4px] mr-[14px]">
