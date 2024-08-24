@@ -3,7 +3,6 @@ import Auth from "../views/AuthView.vue";
 import DocumentValidation from "../views/DocumentValidationView.vue";
 import Profile from "../views/ProfileView.vue";
 import Home from "../views/HomeView.vue";
-import PrincipalView from "@/views/PrincipalView.vue";
 import ExamFinished from "../views/ExamFinishedView.vue";
 import Login from "@/views/LoginView.vue";
 
@@ -23,7 +22,7 @@ const router = createRouter({
     {
       path: "/examen",
       name: "Home",
-      component: PrincipalView,
+      component: Home,
     },
     {
       path: "/examen-finalizado",

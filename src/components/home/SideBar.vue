@@ -1,0 +1,145 @@
+<script setup>
+import { ref, computed } from "vue";
+import { ChevronDown, ChevronUp } from "lucide-vue-next";
+import PerfilImg from "@/assets/images/perfil.png";
+
+const props = defineProps({
+  leftPaneWidth: {
+    type: String,
+    required: true
+  },
+  maxWidth: {
+    type: String,
+    required: true
+  },
+  answeredQuestions: {
+    type: Number,
+    required: true
+  },
+  totalQuestions: {
+    type: Number,
+    required: true
+  }
+});
+
+const isDropdownOpen = ref(false);
+
+const progressPercentage = computed(() => {
+  return (props.answeredQuestions / props.totalQuestions) * 100;
+});
+
+const topics = ref([
+  { id: 1, title: "Obligaciones del conductor", expanded: true },
+  { id: 2, title: "Señales de tránsito", expanded: false },
+  { id: 3, title: "Normas de circulación", expanded: false },
+  { id: 4, title: "Seguridad vial", expanded: false },
+]);
+
+const toggleTopic = (id) => {
+  const topic = topics.value.find((t) => t.id === id);
+  topic.expanded = !topic.expanded;
+};
+</script>
+
+<template>
+  <aside class="left-pane py-[20px]" :style="{ width: leftPaneWidth, maxWidth: maxWidth }">
+    <div class="flex flex-col gap-[10px] items-center border-b-2 pb-[20px]">
+      <h1 class="uppercase text-size-18 text-red-600 font-medium">
+        Postulante
+      </h1>
+      <img
+          :src="PerfilImg"
+          alt=""
+          class="w-[150px] p-[5px] border rounded-[5px]"
+      />
+      <p class="uppercase text-size-16 font-medium">
+        Juan Isaias Rojas Pariona
+      </p>
+    </div>
+    <div class="contenedor">
+      <nav class="px-3 flex-grow overflow-y-auto">
+        <div v-for="topic in topics" :key="topic.id" class="border-b-2">
+          <div
+              @click="toggleTopic(topic.id)"
+              class="flex items-center justify-between cursor-pointer h-[45px] bg-gray-50 pl-[20px]"
+          >
+            <h3 class="font-medium">{{ topic.title }}</h3>
+            <ChevronDown v-if="!topic.expanded" />
+            <ChevronUp v-else />
+          </div>
+
+          <ul v-if="topic.expanded" class="space-y-1 text-sm mt-2">
+            <li
+                v-for="n in 5"
+                :key="n"
+                class="option flex items-center justify-between h-[45px]"
+            >
+              <label :for="`question${topic.id}-${n}`" class="truncate">
+                {{ n }}. ¿Qué indicaciones o información hay que dar al 112 si
+                vemos un accidente? {{ n }}
+              </label>
+              <div
+                  class="circle-alrt rounded-full fixed-size border-2 border-red-400 circle"
+              ></div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="resumen p-3 border-t-2">
+        <div class="w-full bg-red-600 rounded-full h-4 mb-2">
+          <div
+              class="bg-red-300 h-4 rounded-full"
+              :style="{ width: `${progressPercentage}%` }"
+          ></div>
+        </div>
+        <div class="flex justify-between text-sm">
+          <p>
+            Resumen de preguntas ({{ answeredQuestions }}/{{ totalQuestions }})
+          </p>
+          <p>{{ progressPercentage.toFixed(0) }}%</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<style scoped>
+.circle-alrt {
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+}
+
+.left-pane {
+  min-width: 300px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.contenedor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.contenedor nav {
+  flex: 1;
+}
+
+.option {
+  border-top: 0.01px solid #f8f8f8a8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rounded-full.fixed-size {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #f87171;
+}
+</style>

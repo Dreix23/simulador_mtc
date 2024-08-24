@@ -7,9 +7,9 @@ import PerfilImg from "@/assets/images/perfil.png";
 
 const router = useRouter();
 
-// const startExam = () => {
-//   router.push({ name: "Home" });
-// };
+  const startExam = () => {
+    router.push({ name: "Home" });
+  };
 </script>
 
 <template>
