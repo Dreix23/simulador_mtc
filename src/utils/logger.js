@@ -1,5 +1,5 @@
 // Variable para controlar si se muestran los logs o no
-export const enableLogs = false;
+export const enableLogs = true;
 
 // Función para loguear información
 export function logInfo(message) {

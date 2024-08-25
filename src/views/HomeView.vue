@@ -1,16 +1,17 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { ChevronRight, ChevronLeft } from "lucide-vue-next";
-import { useRouter } from "vue-router";
+import {ref, computed, onMounted, onUnmounted} from "vue";
+import {ChevronRight, ChevronLeft} from "lucide-vue-next";
+import {useRouter} from "vue-router";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import HelpImage from "@/components/HelpImage.vue";
 import SideBar from "@/components/home/SideBar.vue";
 import ZoomControl from "@/components/home/ZoomControl.vue";
-import { logInfo, logError } from '@/utils/logger.js';
+import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
+import {logInfo, logError} from '@/utils/logger.js';
 
 const isResizing = ref(false);
-const leftPaneWidth = ref("300px");
+const leftPaneWidth = ref("320px");
 const maxWidth = ref("80%");
 const showHelpImage = ref(false);
 const router = useRouter();
@@ -44,8 +45,8 @@ const questions = ref([
 ]);
 
 const selectedAnswers = ref({});
-
 const remainingTime = ref("00:00");
+const showConfirmationDialog = ref(false);
 
 const startResizing = (e) => {
   isResizing.value = true;
@@ -107,9 +108,13 @@ const toggleHelpImage = () => {
   showHelpImage.value = !showHelpImage.value;
 };
 
+const openConfirmationDialog = () => {
+  showConfirmationDialog.value = true;
+};
+
 const finishExam = () => {
   logInfo("Examen finalizado");
-  router.push({ name: "ExamFinished" });
+  router.push({name: "ExamFinished"});
 };
 
 const zoomLevel = ref(100);
@@ -144,7 +149,8 @@ onMounted(() => {
         :totalQuestions="totalQuestions"
     />
 
-    <div class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300" @mousedown="startResizing"></div>
+    <div class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
+         @mousedown="startResizing"></div>
     <section class="flex-grow bg-transparent shadow-md overflow-auto flex flex-col relative">
       <div class="flex-grow p-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-2">
@@ -220,14 +226,14 @@ onMounted(() => {
                 @click="previousQuestion"
                 class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
             >
-              <ChevronLeft />
+              <ChevronLeft/>
             </button>
             <span>{{ currentQuestion }}/{{ totalQuestions }}</span>
             <button
                 @click="nextQuestion"
                 class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
             >
-              <ChevronRight />
+              <ChevronRight/>
             </button>
           </div>
           <button
@@ -241,19 +247,23 @@ onMounted(() => {
       <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full">
         <button
             v-if="currentQuestion === totalQuestions"
-            @click="finishExam"
+            @click="openConfirmationDialog"
             class="flex items-center justify-center gap-[5px] w-[190px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
           <span class="icon-[lucide--door-closed] text-[15px]"></span>
           FINALIZAR EXAMEN
         </button>
-        <ZoomControl :initialZoom="zoomLevel" @zoomChange="handleZoomChange" class="absolute right-4 bottom-0" />
+        <ZoomControl :initialZoom="zoomLevel" @zoomChange="handleZoomChange" class="absolute right-4 bottom-0"/>
       </div>
     </section>
   </main>
 
-  <Footer />
-  <HelpImage :showHelpImage="showHelpImage" @close="toggleHelpImage" />
+  <Footer/>
+  <HelpImage :showHelpImage="showHelpImage" @close="toggleHelpImage"/>
+  <ConfirmationDialog
+      v-model:isVisible="showConfirmationDialog"
+      @confirmed="finishExam"
+  />
 </template>
 
 <style scoped>

@@ -72,14 +72,14 @@ const toggleTopic = (id) => {
             <li
                 v-for="n in 5"
                 :key="n"
-                class="option flex items-center justify-between h-[45px]"
+                class="option flex items-center justify-between h-[45px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md"
             >
-              <label :for="`question${topic.id}-${n}`" class="truncate">
+              <label :for="`question${topic.id}-${n}`" class="truncate pl-[20px] cursor-pointer w-full h-full flex items-center">
                 {{ n }}. ¿Qué indicaciones o información hay que dar al 112 si
                 vemos un accidente? {{ n }}
               </label>
               <div
-                  class="circle-alrt rounded-full fixed-size border-2 border-red-400 circle"
+                  class="circle-alrt rounded-full fixed-size border-2 border-red-400 circle mr-2"
               ></div>
             </li>
           </ul>
@@ -141,5 +141,10 @@ const toggleTopic = (id) => {
   width: 30px;
   height: 30px;
   border: 1px solid #f87171;
+}
+
+.hover\:bg-custom-red:hover {
+  background-color: #F44336;
+  box-shadow: inset 0 4px 0 rgba(255,255,255,0.2), inset 0 -4px 0 rgba(0,0,0,0.2);
 }
 </style>

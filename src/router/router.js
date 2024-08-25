@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Auth from "../views/AuthView.vue";
 import DocumentValidation from "../views/DocumentValidationView.vue";
 import Profile from "../views/ProfileView.vue";
 import Home from "../views/HomeView.vue";
 import ExamFinished from "../views/ExamFinishedView.vue";
 import Login from "@/views/LoginView.vue";
+import AdminView from "@/views/AdminView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -32,7 +32,12 @@ const router = createRouter({
     {
       path: "/login-admin",
       name: "Auth",
-      component: Auth,
+      component: Login,
+    },
+    {
+      path: "/admin",
+      name: "Admin",
+      component: AdminView,
     },
   ],
 });
