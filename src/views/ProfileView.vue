@@ -16,7 +16,7 @@ const router = useRouter();
   <div class="min-h-screen h-screen bg-white flex flex-col">
     <Header
       title="EXAMEN DE CONOCIMIENTOS"
-      :showMenuIcon="false"
+      :showMenuIcon="true"
       @toggle-sidebar="toggleSidebar"
     />
 

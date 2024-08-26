@@ -16,7 +16,7 @@ const startNewExam = () => {
   <div class="min-h-screen flex flex-col">
     <Header
       title="EXAMEN FINALIZADO"
-      :showMenuIcon="false"
+      :showMenuIcon="true"
       @toggle-sidebar="toggleSidebar"
     />
 

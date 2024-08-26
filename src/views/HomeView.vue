@@ -157,12 +157,11 @@ onMounted(() => {
           <div></div>
           <p
               class="text-red-500"
-              :style="{ fontSize: baseFontSize }"
           >
             Tiempo restante:
             <span class="font-semibold">{{ remainingTime }}</span>
           </p>
-          <p :style="{ fontSize: baseFontSize }">
+          <p>
             Intentos: 1 de 0
           </p>
         </div>

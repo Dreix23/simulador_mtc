@@ -18,10 +18,13 @@ export default {
         "color-gray": "#5B5555",
         "color-gray-line": "#E0E0E0",
         "color-red": "#D25353",
+        "color-red-bg": "#B0000B",
+        "color-gray-bg": "#FAFAFA",
       },
       boxShadow: {
         "shadow-form": "0px 0px 10.2px 0px rgba(0, 0, 0, 0.75);",
         "shadow-btn": "5px 4px 6.7px 0px #000;",
+        "shadow-container": "0px 0px 5.9px 0px rgba(0, 0, 0, 0.57);",
       },
       border:{
         "line": "border: 1px #E0E0E0;",

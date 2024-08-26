@@ -1,6 +1,8 @@
 <script setup>
+import { ref } from "vue";
 import { defineProps, defineEmits } from "vue";
 import { Menu } from "lucide-vue-next";
+import Sidebar from "./home/NabBar.vue"; // Asegúrate de que la ruta sea correcta
 
 const props = defineProps({
   title: {
@@ -15,31 +17,40 @@ const props = defineProps({
 
 const emit = defineEmits(["toggle-sidebar"]);
 
+// Estado reactivo para controlar la visibilidad del Sidebar
+const isSidebarVisible = ref(false);
+
 const toggleSidebar = () => {
+  isSidebarVisible.value = !isSidebarVisible.value;
   emit("toggle-sidebar");
 };
 </script>
 
 <template>
   <header
-      class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between"
+    class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between"
   >
     <div class="w-[250px] flex items-center">
       <button v-if="showMenuIcon" @click="toggleSidebar" class="mr-4">
-        <Menu class="w-6 h-6" />
+        <Menu class="w-[30px] h-[30px]" />
       </button>
     </div>
-    <h2 class="text-[22px] tracking-[-0.88px] font-normal whitespace-pre-wrap flex-grow text-center">
+    <h2
+      class="text-[22px] tracking-[-0.88px] font-normal whitespace-pre-wrap flex-grow text-center"
+    >
       {{ title }}
     </h2>
     <div class="h-[54px] w-[250px] flex justify-end">
       <img
-          src="@/assets/images/logo-mtc.png"
-          alt="MTC Logo"
-          class="w-full right-2 py-1 object-contain"
+        src="@/assets/images/logo-mtc.png"
+        alt="MTC Logo"
+        class="w-full right-2 py-1 object-contain"
       />
     </div>
   </header>
+
+  <!-- Llama al componente Sidebar y controla su visibilidad -->
+  <Sidebar :isVisible="isSidebarVisible" @close="isSidebarVisible = false" />
 </template>
 
 <style scoped>

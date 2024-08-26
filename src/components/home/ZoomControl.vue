@@ -6,13 +6,24 @@ import { logInfo, logError } from '@/utils/logger.js';
 const props = defineProps({
   initialZoom: {
     type: Number,
-    default: 100
+    default: 45 // Por defecto, el tamaño de fuente es para el 45%
   }
 });
 
 const emit = defineEmits(['zoomChange']);
 
 const zoomLevel = ref(props.initialZoom);
+const fontSize = ref('16px'); // Tamaño de fuente dinámico basado en zoom
+
+const updateFontSize = () => {
+  if (zoomLevel.value >= 45) {
+    // De 45% a 100%, ajustamos el tamaño de fuente proporcionalmente hasta 22px
+    fontSize.value = `${16 + (zoomLevel.value - 45) / 55 * (22 - 16)}px`;
+  } else {
+    // De 0% a 45%, ajustamos el tamaño de fuente proporcionalmente hasta 5px
+    fontSize.value = `${16 - (45 - zoomLevel.value) / 45 * (16 - 5)}px`;
+  }
+};
 
 const setZoom = (value) => {
   zoomLevel.value = Math.max(0, Math.min(100, value));
@@ -34,7 +45,11 @@ watch(zoomLevel, (newValue) => {
     setZoom(Math.max(0, Math.min(100, newValue)));
   }
   emit('zoomChange', zoomLevel.value);
+  updateFontSize();
 });
+
+// Inicializar el tamaño de fuente basado en el nivel inicial de zoom
+updateFontSize();
 </script>
 
 <template>
