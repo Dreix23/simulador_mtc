@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { FileQuestion, Loader2, ArrowLeft, Plus, Trash2, Image } from 'lucide-vue-next';
+import { FileQuestion, Loader2, ArrowLeft, Plus, Trash2, Image, Check } from 'lucide-vue-next';
 import { logInfo, logError } from '@/utils/logger.js';
 
 const props = defineProps({
@@ -44,6 +44,7 @@ const loadQuestionnaire = async (id) => {
         {
           text: '¿Pregunta de ejemplo?',
           options: ['Opción 1', 'Opción 2', 'Opción 3', 'Opción 4'],
+          correctOption: 0,
           image: null,
           imagePreview: null
         }
@@ -83,6 +84,7 @@ const addQuestion = () => {
   questionnaire.value.questions.push({
     text: '',
     options: ['', '', '', ''],
+    correctOption: 0,
     image: null,
     imagePreview: null
   });
@@ -97,7 +99,11 @@ const addOption = (questionIndex) => {
 };
 
 const removeOption = (questionIndex, optionIndex) => {
-  questionnaire.value.questions[questionIndex].options.splice(optionIndex, 1);
+  const question = questionnaire.value.questions[questionIndex];
+  question.options.splice(optionIndex, 1);
+  if (question.correctOption >= question.options.length) {
+    question.correctOption = question.options.length - 1;
+  }
 };
 
 const handleImageUpload = (event, questionIndex) => {
@@ -115,6 +121,10 @@ const handleImageUpload = (event, questionIndex) => {
 const removeImage = (questionIndex) => {
   questionnaire.value.questions[questionIndex].image = null;
   questionnaire.value.questions[questionIndex].imagePreview = null;
+};
+
+const setCorrectOption = (questionIndex, optionIndex) => {
+  questionnaire.value.questions[questionIndex].correctOption = optionIndex;
 };
 </script>
 
@@ -148,7 +158,9 @@ const removeImage = (questionIndex) => {
 
     <div class="mb-6">
       <h3 class="text-xl font-medium text-gray-900 mb-4">Preguntas</h3>
-      <div v-for="(question, qIndex) in questionnaire.questions" :key="qIndex" class="mb-6 p-4 border border-gray-200 bg-color-purple-1 rounded-md">
+      <div v-for="(question, qIndex) in questionnaire.questions" :key="qIndex"
+           :class="['mb-6 p-4 border border-gray-200 rounded-md',
+                    qIndex % 2 === 0 ? 'bg-purple-50' : 'bg-blue-50']">
         <div class="flex items-center mb-4">
           <input
               v-model="question.text"
@@ -176,6 +188,11 @@ const removeImage = (questionIndex) => {
                 class="flex-grow p-2 border border-gray-300 rounded-md"
                 :placeholder="`Opción ${oIndex + 1}`"
             />
+            <button @click="setCorrectOption(qIndex, oIndex)"
+                    :class="['ml-2 p-1 rounded-full',
+                             question.correctOption === oIndex ? 'bg-green-500' : 'bg-gray-200']">
+              <Check class="h-5 w-5 text-white" />
+            </button>
             <button @click="removeOption(qIndex, oIndex)" class="ml-2 text-red-600 hover:text-red-800">
               <Trash2 class="h-5 w-5" />
             </button>

@@ -15,6 +15,7 @@
     "@iconify/tailwind": "^1.1.3",
     "@tauri-apps/api": "^1.6.0",
     "lucide-vue-next": "^0.427.0",
+    "pdfjs-dist": "^4.5.136",
     "vue": "^3.4.29",
     "vue-router": "^4.4.3"
   },
