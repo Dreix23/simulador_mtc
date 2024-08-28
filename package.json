@@ -6,20 +6,26 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@iconify/tailwind": "^1.1.3",
+    "@tauri-apps/api": "^1.6.0",
     "lucide-vue-next": "^0.427.0",
     "vue": "^3.4.29",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
     "@iconify/json": "^2.2.241",
+    "@tauri-apps/cli": "^1.6.1",
     "@vitejs/plugin-vue": "^5.0.5",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
-    "vite": "^5.3.1"
+    "vite": "^5.3.1",
+    "vite-plugin-tauri": "^3.3.0"
   }
 }

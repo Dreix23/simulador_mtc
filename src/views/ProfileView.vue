@@ -17,7 +17,6 @@ const router = useRouter();
     <Header
       title="EXAMEN DE CONOCIMIENTOS"
       :showMenuIcon="true"
-      @toggle-sidebar="toggleSidebar"
     />
 
     <main

@@ -54,7 +54,6 @@ onUnmounted(() => {
     <Header
         title="EXAMEN DE CONOCIMIENTO - ACCESO PARA POSTULANTES"
         :showMenuIcon="false"
-        @toggle-sidebar="toggleSidebar"
     />
 
     <main class="flex-grow flex items-center justify-center ">
