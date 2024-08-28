@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { logError, logInfo } from "@/utils/logger.js";
 import InputField from "@/elements/admin/users/InputField.vue";
-import SelectField from "@/elements/admin/users/SelectField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ActionButton from "@/elements/admin/users/ActionButton.vue";
 
@@ -110,6 +109,19 @@ const handleExcelUpload = async (event) => {
     }
   }
 };
+
+const categories = ref([
+  "A-I",
+  "BII-A",
+  "BII-B",
+  "AII-A",
+  "AII-B",
+  "AIII-A",
+  "AIII-B",
+  "AIII-C",
+  "BII-C",
+]);
+const selectedCategory = ref(categories.value[0]);
 </script>
 
 <template>
@@ -159,18 +171,22 @@ const handleExcelUpload = async (event) => {
         :flex="0.15"
         required
       />
-      <SelectField
-        id="categoria"
-        v-model="newUser.categoria"
-        label="Categoría"
-        :options="[
-          { value: 'A', label: 'A' },
-          { value: 'B', label: 'B' },
-          { value: 'C', label: 'C' },
-        ]"
-        :flex="0.1"
-        class="flex-[0.1]"
-      />
+      <div class="flex-[0.1]">
+        <label  class="block text-sm font-medium text-gray-700 mb-2">Categorías</label>
+        <select
+          id="categories"
+          v-model="selectedCategory"
+          class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-2 border-gray-300 rounded-md h-12 px-3 cursor-pointer"
+        >
+          <option
+            v-for="category in categories"
+            :key="category"
+            :value="category"
+          >
+            {{ category }}
+          </option>
+        </select>
+      </div>
     </div>
     <div class="flex justify-between">
       <div class="space-x-4">
