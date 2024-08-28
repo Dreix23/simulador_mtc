@@ -10,7 +10,7 @@ defineEmits(['update:modelValue', 'change']);
 
 <template>
   <div class="h-full">
-    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
+    <!-- <label for="imagen" class="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label> -->
     <div class="w-40">
       <input
           type="file"

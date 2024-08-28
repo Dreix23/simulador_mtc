@@ -20,6 +20,10 @@ export default {
         "color-red": "#D25353",
         "color-red-bg": "#B0000B",
         "color-gray-bg": "#FAFAFA",
+        "color-gray-cover": "#F2F2F2",
+        "color-purple-1": "#F5F6F8",
+        "color-purple-2": "#E6E7EC",
+        "color-blue-max": "#0A1B39",
       },
       boxShadow: {
         "shadow-form": "0px 0px 10.2px 0px rgba(0, 0, 0, 0.75);",

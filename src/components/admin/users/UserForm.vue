@@ -6,7 +6,7 @@ import SelectField from "@/elements/admin/users/SelectField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ActionButton from "@/elements/admin/users/ActionButton.vue";
 
-const emit = defineEmits(['user-added']);
+const emit = defineEmits(["user-added"]);
 
 const documentTypes = [
   "DNI",
@@ -29,13 +29,18 @@ const newUser = ref({
 const isLoading = ref({
   addUser: false,
   downloadExcel: false,
-  uploadExcel: false
+  uploadExcel: false,
 });
 
 const fileInput = ref(null);
 
 const addUser = async () => {
-  if (!newUser.value.numeroDocumento || !newUser.value.apellidos || !newUser.value.nombre || !newUser.value.fechaNacimiento) {
+  if (
+    !newUser.value.numeroDocumento ||
+    !newUser.value.apellidos ||
+    !newUser.value.nombre ||
+    !newUser.value.fechaNacimiento
+  ) {
     logError("Todos los campos son obligatorios");
     return;
   }
@@ -46,7 +51,7 @@ const addUser = async () => {
     if (userToAdd.imagen) {
       userToAdd.imagenUrl = URL.createObjectURL(userToAdd.imagen);
     }
-    emit('user-added', userToAdd);
+    emit("user-added", userToAdd);
     newUser.value = {
       tipoDocumento: "DNI",
       numeroDocumento: "",
@@ -73,7 +78,7 @@ const handleImageUpload = (event) => {
 const downloadExcelTemplate = async () => {
   isLoading.value.downloadExcel = true;
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     // Aquí iría la lógica real para descargar el archivo
     logInfo("Plantilla de Excel descargada correctamente");
   } catch (error) {
@@ -94,14 +99,14 @@ const handleExcelUpload = async (event) => {
   if (file) {
     isLoading.value.uploadExcel = true;
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       // Aquí iría la lógica real para procesar el archivo Excel
       logInfo("Archivo Excel procesado correctamente");
     } catch (error) {
       logError(`Error al procesar el archivo Excel: ${error.message}`);
     } finally {
       isLoading.value.uploadExcel = false;
-      event.target.value = '';
+      event.target.value = "";
     }
   }
 };
@@ -110,48 +115,105 @@ const handleExcelUpload = async (event) => {
 <template>
   <div class="flex flex-col gap-4 mb-6">
     <div class="flex justify-between items-center">
-      <div class="flex-1 mr-2 relative">
+      <div class="flex-[0.2] justify-start">
         <select
-            v-model="newUser.tipoDocumento"
-            class="absolute right-0 top-0 text-sm bg-transparent border-none focus:ring-0 z-10"
+          v-model="newUser.tipoDocumento"
+          class="text-sm bg-transparent border-none focus:ring-0 z-10 cursor-pointer"
         >
           <option v-for="type in documentTypes" :key="type" :value="type">
             {{ type }}
           </option>
         </select>
-        <div class="mt-7">
+
+        <div class="mt-[8px]">
           <InputField
-              id="numeroDocumento"
-              v-model="newUser.numeroDocumento"
-              :placeholder="newUser.tipoDocumento"
-              :maxlength="20"
-              :flex="1"
+            id="numeroDocumento"
+            v-model="newUser.numeroDocumento"
+            :placeholder="newUser.tipoDocumento"
+            :maxlength="20"
+            :flex="1"
           />
         </div>
       </div>
-
-      <InputField id="apellidos" v-model="newUser.apellidos" label="Apellidos" placeholder="Apellidos" :flex="0.25"/>
-      <InputField id="nombre" v-model="newUser.nombre" label="Nombre" placeholder="Nombre" :flex="0.25"/>
-      <InputField id="fechaNacimiento" v-model="newUser.fechaNacimiento" label="F. Nacimiento" type="date"
-                  :flex="0.15" required/>
-      <SelectField id="categoria" v-model="newUser.categoria" label="Categoría"
-                   :options="[{value: 'A', label: 'A'}, {value: 'B', label: 'B'}, {value: 'C', label: 'C'}]"
-                   :flex="0.1"/>
-      <ImageUpload v-model="newUser.imagen" @change="handleImageUpload"/>
+      <InputField
+        id="apellidos"
+        v-model="newUser.apellidos"
+        label="Apellidos"
+        placeholder="Apellidos"
+        :flex="0.5"
+        class="flex-[0.32]"
+      />
+      <InputField
+        id="nombre"
+        v-model="newUser.nombre"
+        label="Nombre"
+        placeholder="Nombre"
+        :flex="0.25"
+        class="flex-[0.32]"
+      />
+      <InputField
+        id="fechaNacimiento"
+        v-model="newUser.fechaNacimiento"
+        label="F. Nacimiento"
+        type="date"
+        :flex="0.15"
+        required
+      />
+      <SelectField
+        id="categoria"
+        v-model="newUser.categoria"
+        label="Categoría"
+        :options="[
+          { value: 'A', label: 'A' },
+          { value: 'B', label: 'B' },
+          { value: 'C', label: 'C' },
+        ]"
+        :flex="0.1"
+        class="flex-[0.1]"
+      />
     </div>
     <div class="flex justify-between">
       <div class="space-x-4">
-        <ActionButton @click="downloadExcelTemplate" :isLoading="isLoading.downloadExcel" icon="FileDown"
-                      text="Modelo Excel" color="green"/>
-        <ActionButton @click="uploadExcel" :isLoading="isLoading.uploadExcel" icon="FileUp" text="Subir Excel"
-                      color="blue"/>
-        <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx,.xls" class="hidden"/>
+        <ActionButton
+          @click="downloadExcelTemplate"
+          :isLoading="isLoading.downloadExcel"
+          icon="FileDown"
+          text="Modelo Excel"
+          color="green"
+        />
+        <ActionButton
+          @click="uploadExcel"
+          :isLoading="isLoading.uploadExcel"
+          icon="FileUp"
+          text="Subir Excel"
+          color="blue"
+        />
+        <input
+          type="file"
+          ref="fileInput"
+          @change="handleExcelUpload"
+          accept=".xlsx,.xls"
+          class="hidden"
+        />
       </div>
-      <ActionButton @click="addUser" :isLoading="isLoading.addUser" icon="UserPlus" text="Guardar" color="indigo"
-                    :disabled="!newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre || !newUser.fechaNacimiento"/>
+      <div class="flex items-center gap-[16px]">
+        <ImageUpload v-model="newUser.imagen" @change="handleImageUpload" />
+        <ActionButton
+          @click="addUser"
+          :isLoading="isLoading.addUser"
+          icon="UserPlus"
+          text="Guardar"
+          color="indigo"
+          :disabled="
+            !newUser.numeroDocumento ||
+            !newUser.apellidos ||
+            !newUser.nombre ||
+            !newUser.fechaNacimiento
+          "
+        />
+      </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

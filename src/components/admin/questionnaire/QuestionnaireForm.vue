@@ -148,7 +148,7 @@ const removeImage = (questionIndex) => {
 
     <div class="mb-6">
       <h3 class="text-xl font-medium text-gray-900 mb-4">Preguntas</h3>
-      <div v-for="(question, qIndex) in questionnaire.questions" :key="qIndex" class="mb-6 p-4 border border-gray-200 rounded-md">
+      <div v-for="(question, qIndex) in questionnaire.questions" :key="qIndex" class="mb-6 p-4 border border-gray-200 bg-color-purple-1 rounded-md">
         <div class="flex items-center mb-4">
           <input
               v-model="question.text"
