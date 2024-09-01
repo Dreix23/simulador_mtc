@@ -1,6 +1,7 @@
 <script setup>
 import { Trash2, Edit2 } from "lucide-vue-next";
 import { logInfo, logError } from "@/utils/logger.js";
+import { userService } from "@/services/user_service.js";
 
 const props = defineProps({
   users: {
@@ -9,14 +10,13 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete-user']);
+const emit = defineEmits(['userDeleted']);
 
-const deleteUser = async (index) => {
+const deleteUser = async (userId) => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const deletedUser = props.users[index];
-    emit('delete-user', index);
-    logInfo(`Usuario eliminado: ${deletedUser.nombre} ${deletedUser.apellidos}`);
+    await userService.deleteUser(userId);
+    emit('userDeleted', userId);
+    logInfo(`Usuario eliminado: ${userId}`);
   } catch (error) {
     logError(`Error al eliminar usuario: ${error.message}`);
   }
@@ -30,37 +30,32 @@ const deleteUser = async (index) => {
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
         <tr>
-          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">DNI</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Apellidos</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Nombre</th>
-          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">F. Nac.</th>
-          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Cat.</th>
-          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Imagen</th>
-          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Acciones</th>
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apellidos</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Nacimiento</th>
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imagen</th>
+          <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="(user, index) in users" :key="user.dni">
-          <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.dni }}</td>
+        <tr v-for="user in users" :key="user.id">
+          <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.numeroDocumento }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ user.apellidos }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ user.nombre }}</td>
           <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.fechaNacimiento }}</td>
           <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.categoria }}</td>
           <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-            <img
-                v-if="user.imagenUrl"
-                :src="user.imagenUrl"
-                alt="User Image"
-                class="h-8 w-8 rounded-full object-cover"
-            />
+            <img v-if="user.imagenUrl" :src="user.imagenUrl" alt="User Image" class="h-8 w-8 rounded-full object-cover" />
             <span v-else>-</span>
           </td>
           <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-            <div class="flex space-x-2">
+            <div class="flex justify-center space-x-4">
               <button class="text-indigo-600 hover:text-indigo-900">
                 <Edit2 class="h-5 w-5" />
               </button>
-              <button @click="deleteUser(index)" class="text-red-600 hover:text-red-900">
+              <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-900">
                 <Trash2 class="h-5 w-5" />
               </button>
             </div>

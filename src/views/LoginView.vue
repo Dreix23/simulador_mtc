@@ -1,14 +1,26 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from "vue-router";
-import { EyeOff, Eye } from 'lucide-vue-next'; // Asegúrate de importar los íconos de heroicons o el paquete que estés utilizando
+import { EyeOff, Eye, Loader } from 'lucide-vue-next';
+import { authService } from '../services/auth_service';
 
 const router = useRouter();
 const showPassword = ref(false);
+const email = ref('');
+const password = ref('');
+const errorMessage = ref('');
+const isLoading = ref(false);
 
-const handleLogin = () => {
-  // Redirige directamente al AdminView sin autenticación
-  router.push({ name: "Admin" });
+const handleLogin = async () => {
+  isLoading.value = true;
+  try {
+    await authService.login(email.value, password.value);
+    router.push({ name: "Admin" });
+  } catch (error) {
+    errorMessage.value = "Error al iniciar sesión. Por favor, verifica tus credenciales.";
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const togglePasswordVisibility = () => {
@@ -17,27 +29,29 @@ const togglePasswordVisibility = () => {
 </script>
 
 <template>
-  <main class="flex justify-center items-center h-[100vh]">
-    <div class="login-container">
-      <h2 class="text-2xl font-bold mb-[5px] text-center">Login</h2>
-      <p class="uppercase text-size-14 text-center">Inicia sesión para acceder a tu cuenta</p>
-      <form @submit.prevent="handleLogin" class="mt-[15px] flex flex-col gap-[20px]">
-        <div class="flex flex-col gap-[5px]">
-          <label for="email">Email</label>
-          <input type="email" id="email" placeholder="nombre@gmail.com" class="input-login">
+  <main class="flex justify-center items-center h-screen bg-gray-100">
+    <div class="login-container shadow-lg rounded-lg bg-white p-8">
+      <h2 class="text-3xl font-bold mb-2 text-center text-gray-800">Iniciar Sesión</h2>
+      <p class="text-sm text-gray-600 text-center mb-6">Accede a tu cuenta</p>
+      <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
+        <div class="flex flex-col">
+          <label for="email" class="text-gray-700">Email</label>
+          <input v-model="email" type="email" id="email" placeholder="nombre@gmail.com" class="input-login" required>
         </div>
-        <div class="flex flex-col gap-[5px] relative">
-          <label for="password">Contraseña</label>
-          <input :type="showPassword ? 'text' : 'password'" id="password" placeholder="*******************" class="input-login">
-          <span @click="togglePasswordVisibility" class="absolute right-3 top-9 cursor-pointer">
-            <component :is="showPassword ? Eye : EyeOff" />
+        <div class="flex flex-col relative">
+          <label for="password" class="text-gray-700">Contraseña</label>
+          <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" placeholder="*******************" class="input-login" required>
+          <span @click="togglePasswordVisibility" class="absolute right-3 top-10 cursor-pointer">
+            <component :is="showPassword ? Eye : EyeOff" class="text-gray-500" />
           </span>
         </div>
+        <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
         <div class="flex justify-end">
-          <a href="#">¿Recuperar la contraseña?</a>
+          <a href="#" class="text-sm text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
         </div>
-        <button type="submit" class="bg-color-red-bg text-white py-[7px] rounded-[8px]">
-          Entrar
+        <button type="submit" class="bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition duration-200 flex items-center justify-center" :disabled="isLoading">
+          <Loader v-if="isLoading" class="animate-spin mr-2" size="20" />
+          {{ isLoading ? 'Cargando...' : 'Entrar' }}
         </button>
       </form>
     </div>
@@ -47,16 +61,17 @@ const togglePasswordVisibility = () => {
 <style scoped>
 .input-login {
   border: 1px solid #D1D5DB;
-  padding: 9px 12px;
+  padding: 12px;
   border-radius: 8px;
   width: 100%;
+  transition: border-color 0.2s;
+}
+
+.input-login:focus {
+  border-color: #EF4444;
+  outline: none;
 }
 .login-container {
   width: 400px;
-  margin: auto;
-  padding: 20px;
-  border-radius: 8px;
-  background-color: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 </style>

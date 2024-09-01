@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { ChevronDown, ChevronUp } from "lucide-vue-next";
-import PerfilImg from "@/assets/images/perfil.png";
+import { logInfo, logError } from '@/utils/logger.js';
 
 const props = defineProps({
   leftPaneWidth: {
@@ -20,21 +20,45 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  selectedAnswers: {
+    type: Object,
+    required: true,
+  },
+  questions: {
+    type: Array,
+    required: true,
+  },
 });
+
+const emit = defineEmits(['questionSelected']);
 
 const isDropdownOpen = ref(false);
 const scrollActive = ref(false);
+const userData = ref(null);
 
 const progressPercentage = computed(() => {
-  return (props.answeredQuestions / props.totalQuestions) * 100;
+  const answeredCount = Object.keys(props.selectedAnswers).length;
+  return (answeredCount / props.totalQuestions) * 100;
 });
 
-const topics = ref([
-  { id: 1, title: "Obligaciones del conductor", expanded: true },
-  { id: 2, title: "Señales de tránsito", expanded: false },
-  { id: 3, title: "Normas de circulación", expanded: false },
-  { id: 4, title: "Seguridad vial", expanded: false },
-]);
+const topics = ref([]);
+
+const groupQuestionsByTopic = () => {
+  const groupedQuestions = props.questions.reduce((acc, question) => {
+    if (!acc[question.TEMA]) {
+      acc[question.TEMA] = [];
+    }
+    acc[question.TEMA].push(question);
+    return acc;
+  }, {});
+
+  topics.value = Object.keys(groupedQuestions).map((topic, index) => ({
+    id: index + 1,
+    title: topic,
+    expanded: index === 0,
+    questions: groupedQuestions[topic],
+  }));
+};
 
 const toggleTopic = (id) => {
   const topic = topics.value.find((t) => t.id === id);
@@ -51,62 +75,101 @@ const checkScroll = () => {
   });
 };
 
+const selectQuestion = (questionId) => {
+  emit('questionSelected', questionId);
+};
+
+const getQuestionStatus = (questionId) => {
+  if (props.selectedAnswers[questionId]) {
+    return 'answered';
+  }
+  return 'unanswered';
+};
+
+const getSelectedAlternative = (questionId) => {
+  if (props.selectedAnswers[questionId]) {
+    const question = props.questions.find(q => q.id === questionId);
+    const alternatives = ['ALTERNATIVA_1', 'ALTERNATIVA_2', 'ALTERNATIVA_3', 'ALTERNATIVA_4'];
+    const index = alternatives.findIndex(alt => question[alt] === props.selectedAnswers[questionId]);
+    return ['a', 'b', 'c', 'd'][index];
+  }
+  return '';
+};
+
 onMounted(() => {
+  groupQuestionsByTopic();
   checkScroll();
+  const storedUserData = localStorage.getItem('userData');
+  if (storedUserData) {
+    userData.value = JSON.parse(storedUserData);
+    logInfo('Datos del usuario cargados correctamente en SideBar');
+  } else {
+    logError('No se encontraron datos del usuario en localStorage en SideBar');
+  }
 });
+
+watch(() => props.questions, () => {
+  groupQuestionsByTopic();
+}, { deep: true });
 </script>
 
 <template>
   <aside
-    class="left-pane py-[20px]"
-    :style="{ width: leftPaneWidth, maxWidth: maxWidth }"
+      class="left-pane py-[20px]"
+      :style="{ width: leftPaneWidth, maxWidth: maxWidth }"
   >
     <div class="flex flex-col gap-[10px] items-center border-b-2 pb-[20px]">
       <h1 class="uppercase text-size-18 text-red-600 font-medium">
         Postulante
       </h1>
       <img
-        :src="PerfilImg"
-        alt=""
-        class="w-[150px] p-[5px] border rounded-[5px]"
+          :src="userData?.imagenUrl || '/path/to/default/image.png'"
+          alt=""
+          class="w-[150px] h-[165px] p-[5px] border rounded-[5px] object-cover"
       />
       <p class="uppercase text-size-16 font-medium">
-        Juan Isaias Rojas Pariona
+        {{ userData?.nombre }} {{ userData?.apellidos }}
       </p>
     </div>
     <div class="contenedor">
       <nav
-        class="container-question px-3 flex-grow overflow-y-auto"
-        :class="{ 'pr-0': scrollActive }"
+          class="container-question px-3 flex-grow overflow-y-auto"
+          :class="{ 'pr-0': scrollActive }"
       >
         <div v-for="topic in topics" :key="topic.id" class="border-b-2">
           <div
-            @click="toggleTopic(topic.id)"
-            class="flex items-center justify-between cursor-pointer h-[45px] bg-gray-50 pl-[20px]"
+              @click="toggleTopic(topic.id)"
+              class="flex items-center justify-between cursor-pointer h-[45px] bg-gray-50 pl-[20px]"
           >
-            <h3 class="font-medium">{{ topic.title }}</h3>
+            <h3 class="font-medium truncate-topic">{{ topic.title }}</h3>
             <ChevronDown v-if="!topic.expanded" />
             <ChevronUp v-else />
           </div>
           <ul
-            v-if="topic.expanded"
-            class="space-y-1 text-sm mt-2 flex flex-col gap-[3px]"
+              v-if="topic.expanded"
+              class="space-y-1 text-sm mt-2 flex flex-col gap-[3px]"
           >
             <li
-              v-for="n in 5"
-              :key="n"
-              class="option flex items-center justify-between h-[45px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md"
+                v-for="(question, index) in topic.questions"
+                :key="question.id"
+                @click="selectQuestion(question.id)"
+                class="option flex items-center justify-between h-[45px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
             >
               <label
-                :for="`question${topic.id}-${n}`"
-                class="pl-[20px] cursor-pointer flex-grow truncate-label"
+                  :for="`question${topic.id}-${index + 1}`"
+                  class="pl-[20px] cursor-pointer flex-grow truncate-label"
               >
-                {{ n }}. ¿Qué indicaciones o información hay que dar al 112 si
-                vemos un accidente? {{ n }}
+                {{ index + 1 }}. {{ question.DESCRIPCIÓN_DE_LA_PREGUNTA }}
               </label>
               <div
-                class="circle-alrt rounded-full fixed-size border-2 border-red-400 circle mr-2"
-              ></div>
+                  class="circle-alrt rounded-full fixed-size border-2 mr-2 flex items-center justify-center"
+                  :class="{
+                  'border-gray-400': getQuestionStatus(question.id) === 'unanswered',
+                  'border-red-400 bg-red-400 text-white': getQuestionStatus(question.id) === 'answered'
+                }"
+              >
+                {{ getSelectedAlternative(question.id) }}
+              </div>
             </li>
           </ul>
         </div>
@@ -114,13 +177,13 @@ onMounted(() => {
       <div class="resumen p-3 border-t-2">
         <div class="w-full bg-red-600 rounded-full h-4 mb-2">
           <div
-            class="bg-red-300 h-4 rounded-full"
-            :style="{ width: `${progressPercentage}%` }"
+              class="bg-red-300 h-4 rounded-full"
+              :style="{ width: `${progressPercentage}%` }"
           ></div>
         </div>
         <div class="flex justify-between text-sm">
           <p>
-            Resumen de preguntas ({{ answeredQuestions }}/{{ totalQuestions }})
+            Resumen de preguntas ({{ Object.keys(selectedAnswers).length }}/{{ totalQuestions }})
           </p>
           <p>{{ progressPercentage.toFixed(0) }}%</p>
         </div>
@@ -128,11 +191,14 @@ onMounted(() => {
     </div>
   </aside>
 </template>
+
 <style scoped>
 .circle-alrt {
   width: 35px;
   height: 35px;
   flex-shrink: 0;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .left-pane {
@@ -141,7 +207,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   transition: width 0.15s ease;
-  font-size: 16px; /* Asegurar tamaño de fuente fijo */
+  font-size: 16px;
 }
 
 .contenedor {
@@ -174,7 +240,7 @@ onMounted(() => {
 .hover\:bg-custom-red:hover {
   background-color: #f44336;
   box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+  inset 0 -4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .pr-0 {
@@ -188,7 +254,14 @@ onMounted(() => {
   max-width: calc(100% - 50px);
 }
 
+.truncate-topic {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 30px);
+}
+
 * {
-  font-size: 16px; /* Tamaño de fuente fijo para todo el componente */
+  font-size: 16px;
 }
 </style>

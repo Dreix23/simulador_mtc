@@ -6,24 +6,13 @@ import { logInfo, logError } from '@/utils/logger.js';
 const props = defineProps({
   initialZoom: {
     type: Number,
-    default: 45 // Por defecto, el tamaño de fuente es para el 45%
+    default: 50
   }
 });
 
 const emit = defineEmits(['zoomChange']);
 
 const zoomLevel = ref(props.initialZoom);
-const fontSize = ref('16px'); // Tamaño de fuente dinámico basado en zoom
-
-const updateFontSize = () => {
-  if (zoomLevel.value >= 45) {
-    // De 45% a 100%, ajustamos el tamaño de fuente proporcionalmente hasta 22px
-    fontSize.value = `${16 + (zoomLevel.value - 45) / 55 * (22 - 16)}px`;
-  } else {
-    // De 0% a 45%, ajustamos el tamaño de fuente proporcionalmente hasta 5px
-    fontSize.value = `${16 - (45 - zoomLevel.value) / 45 * (16 - 5)}px`;
-  }
-};
 
 const setZoom = (value) => {
   zoomLevel.value = Math.max(0, Math.min(100, value));
@@ -45,11 +34,7 @@ watch(zoomLevel, (newValue) => {
     setZoom(Math.max(0, Math.min(100, newValue)));
   }
   emit('zoomChange', zoomLevel.value);
-  updateFontSize();
 });
-
-// Inicializar el tamaño de fuente basado en el nivel inicial de zoom
-updateFontSize();
 </script>
 
 <template>
@@ -58,7 +43,7 @@ updateFontSize();
     <CircleMinus @click="decreaseZoom" class="mr-2 cursor-pointer text-gray-600 hover:text-gray-800" :size="20" />
     <div class="relative w-[150px] h-2 bg-gray-200 rounded-full mr-2">
       <div
-          class="absolute top-0 left-0 h-full bg-red-500 rounded-full"
+          class="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
           :style="{ width: `${zoomLevel}%` }"
       ></div>
       <input

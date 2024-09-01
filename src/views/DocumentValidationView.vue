@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { IdCard, ChevronDown } from "lucide-vue-next";
+import { IdCard, ChevronDown, Loader2 } from "lucide-vue-next";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
-import Keysvg from "@/assets/images/key.svg";
 import Cardsvg from "@/assets/images/card.svg";
+import { validacionDocumentoService } from "@/services/validacion_documento_service";
+import { logInfo, logError } from '@/utils/logger.js';
 
 const router = useRouter();
 const selectedDocumentType = ref("DNI");
@@ -19,10 +20,38 @@ const documentTypes = [
 
 const documentNumber = ref("");
 const isMenuOpen = ref(false);
+const isLoading = ref(false);
 
-const handleSubmit = () => {
-  console.log("Form submitted");
-  router.push({ name: "Profile" });
+const handleSubmit = async () => {
+  isLoading.value = true;
+  try {
+    const isValid = await validacionDocumentoService.validarDocumento(
+        selectedDocumentType.value,
+        documentNumber.value
+    );
+    if (isValid) {
+      const userData = await validacionDocumentoService.obtenerDatosUsuario(
+          selectedDocumentType.value,
+          documentNumber.value
+      );
+      if (userData) {
+        localStorage.setItem('userData', JSON.stringify(userData));
+        logInfo("Documento válido, redirigiendo al perfil");
+        router.push({ name: "Profile" });
+      } else {
+        logInfo("Datos de usuario no encontrados");
+        alert("No se pudieron obtener los datos del usuario.");
+      }
+    } else {
+      logInfo("Documento no encontrado en la base de datos");
+      alert("El documento ingresado no se encuentra en nuestra base de datos.");
+    }
+  } catch (error) {
+    logError(`Error al validar el documento: ${error.message}`);
+    alert("Ocurrió un error al validar el documento. Por favor, intente nuevamente.");
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const toggleMenu = () => {
@@ -56,9 +85,9 @@ onUnmounted(() => {
         :showMenuIcon="false"
     />
 
-    <main class="flex-grow flex items-center justify-center ">
+    <main class="flex-grow flex items-center justify-center">
       <div
-          class="bg-white w-[375px] shadow-shadow-form items-center rounded-[9px] flex gap-[45px]  px-[34px] pt-[56px] pb-[35px]"
+          class="bg-white w-[375px] shadow-shadow-form items-center rounded-[9px] flex gap-[45px] px-[34px] pt-[56px] pb-[35px]"
       >
         <div class="w-[57px] h-[48px]">
           <img :src="Cardsvg" alt="" class="w-[57px]"/>
@@ -84,7 +113,6 @@ onUnmounted(() => {
                 />
               </div>
 
-              <!-- Dropdown menu -->
               <div
                   v-if="isMenuOpen"
                   class="absolute w-full bg-white shadow-md mt-1 rounded-md z-10"
@@ -105,10 +133,13 @@ onUnmounted(() => {
 
           <div class="relative z-0 mb-[14px] w-full">
             <input
+                v-model="documentNumber"
                 type="text"
                 id="floating_standard"
                 class="block py-2.5 px-0 w-full text-sm text-black bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-black peer"
                 placeholder=" "
+                required
+                autocomplete="off"
             />
             <label
                 for="floating_standard"
@@ -121,9 +152,11 @@ onUnmounted(() => {
           <button
               type="submit"
               class="flex items-center justify-center gap-1 md:gap-2 w-[122px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              :disabled="isLoading"
           >
-            <span class="icon-[mdi--key]"></span>
-            Entrar
+            <Loader2 v-if="isLoading" class="animate-spin" size="16" />
+            <span v-else class="icon-[mdi--key]"></span>
+            {{ isLoading ? 'Validando...' : 'Entrar' }}
           </button>
         </form>
       </div>

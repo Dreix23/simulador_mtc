@@ -1,14 +1,15 @@
 <script setup>
-import {ref, computed, onMounted, onUnmounted} from "vue";
-import {ChevronRight, ChevronLeft} from "lucide-vue-next";
-import {useRouter} from "vue-router";
+import { ref, computed, onMounted, watch, onUnmounted } from "vue";
+import { ChevronRight, ChevronLeft } from "lucide-vue-next";
+import { useRouter } from "vue-router";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import HelpImage from "@/components/HelpImage.vue";
 import SideBar from "@/components/home/SideBar.vue";
 import ZoomControl from "@/components/home/ZoomControl.vue";
 import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
-import {logInfo, logError} from '@/utils/logger.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
+import { getQuestionsByCategory, unsubscribeFromQuestions } from '@/services/questions_service.js';
 
 const isResizing = ref(false);
 const leftPaneWidth = ref("320px");
@@ -16,37 +17,144 @@ const maxWidth = ref("80%");
 const showHelpImage = ref(false);
 const router = useRouter();
 
+const questions = ref([]);
 const answeredQuestions = ref(0);
-const totalQuestions = ref(4);
+const totalQuestions = ref(0);
 
-const currentQuestion = ref(1);
-const questions = ref([
-  {
-    id: 1,
-    text: "¿Se puede conducir un vehículo con el motor en punto neutro?",
-    options: [
-      "A. Algunas veces",
-      "B. No se encuentra regulado en el reglamento",
-      "C. Sí, está permitido",
-      "D. No, está prohibido",
-    ],
-  },
-  {
-    id: 2,
-    text: "¿Qué indica la siguiente señal de tránsito?",
-    imageUrl: "https://via.placeholder.com/150",
-    options: [
-      "A. Prohibido el paso de vehículos",
-      "B. Zona de estacionamiento",
-      "C. Contramano o sentido contrario",
-      "D. Velocidad máxima permitida",
-    ],
-  },
-]);
+const currentQuestion = ref(null);
 
 const selectedAnswers = ref({});
-const remainingTime = ref("00:00");
+const remainingTime = ref(2400); // 40 minutos en segundos
 const showConfirmationDialog = ref(false);
+
+let timer;
+
+const formatTime = (seconds) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+const startTimer = () => {
+  timer = setInterval(() => {
+    if (remainingTime.value > 0) {
+      remainingTime.value--;
+      localStorage.setItem('remainingTime', remainingTime.value.toString());
+    } else {
+      clearInterval(timer);
+      finishExam();
+    }
+  }, 1000);
+};
+
+onMounted(async () => {
+  try {
+    questions.value = await getQuestionsByCategory();
+    totalQuestions.value = questions.value.length;
+    currentQuestion.value = questions.value[0] || null;
+    logInfo(`Se cargaron ${totalQuestions.value} preguntas`);
+
+    // Cargar respuestas y tiempo guardados del localStorage
+    const savedAnswers = localStorage.getItem('selectedAnswers');
+    if (savedAnswers) {
+      selectedAnswers.value = JSON.parse(savedAnswers);
+      updateAnsweredQuestions();
+    }
+
+    const savedTime = localStorage.getItem('remainingTime');
+    if (savedTime) {
+      remainingTime.value = parseInt(savedTime);
+    } else {
+      remainingTime.value = 2400; // 40 minutos en segundos
+    }
+
+    startTimer();
+  } catch (error) {
+    logError('Error al cargar las preguntas:', error);
+  }
+
+  window.addEventListener("mousemove", resize);
+  window.addEventListener("mouseup", stopResizing);
+  maxWidth.value = `${window.innerWidth * 0.8}px`;
+  handleZoomChange(zoomLevel.value);
+});
+
+onUnmounted(() => {
+  unsubscribeFromQuestions();
+  window.removeEventListener("mousemove", resize);
+  window.removeEventListener("mouseup", stopResizing);
+  clearInterval(timer);
+});
+
+const updateAnsweredQuestions = () => {
+  answeredQuestions.value = Object.keys(selectedAnswers.value).length;
+};
+
+const selectAnswer = (questionId, option) => {
+  selectedAnswers.value[questionId] = option;
+  updateAnsweredQuestions();
+  localStorage.setItem('selectedAnswers', JSON.stringify(selectedAnswers.value));
+  logDebug(`Respuesta seleccionada para la pregunta ${questionId}: ${option}`);
+};
+
+const previousQuestion = () => {
+  if (!currentQuestion.value) return;
+  const currentIndex = questions.value.findIndex(q => q.id === currentQuestion.value.id);
+  if (currentIndex > 0) {
+    currentQuestion.value = questions.value[currentIndex - 1];
+  }
+};
+
+const nextQuestion = () => {
+  if (!currentQuestion.value) return;
+  const currentIndex = questions.value.findIndex(q => q.id === currentQuestion.value.id);
+  if (currentIndex < totalQuestions.value - 1) {
+    currentQuestion.value = questions.value[currentIndex + 1];
+  }
+};
+
+const toggleHelpImage = () => {
+  showHelpImage.value = !showHelpImage.value;
+};
+
+const openConfirmationDialog = () => {
+  showConfirmationDialog.value = true;
+};
+
+const finishExam = () => {
+  logInfo("Examen finalizado");
+  localStorage.removeItem('selectedAnswers');
+  localStorage.removeItem('remainingTime');
+  clearInterval(timer);
+  logInfo("Datos del localStorage eliminados");
+  router.push({ name: "ExamFinished" });
+};
+
+const zoomLevel = ref(50);
+
+const baseFontSize = computed(() => {
+  const calculatedSize = (zoomLevel.value / 50) * 16;
+  return `${Math.min(calculatedSize, 32)}px`;
+});
+
+const radioButtonSize = computed(() => {
+  const calculatedSize = (zoomLevel.value / 50) * 20;
+  return `${Math.min(calculatedSize, 40)}px`;
+});
+
+const isHidden = computed(() => zoomLevel.value === 0);
+
+const handleZoomChange = (newZoom) => {
+  zoomLevel.value = newZoom;
+  const container = document.querySelector(".container-question");
+  if (container) {
+    container.style.fontSize = baseFontSize.value;
+  }
+};
+
+const handleQuestionSelected = (questionId) => {
+  currentQuestion.value = questions.value.find(q => q.id === questionId) || null;
+};
 
 const startResizing = (e) => {
   isResizing.value = true;
@@ -72,67 +180,16 @@ const resize = (e) => {
   }
 };
 
-onMounted(() => {
-  window.addEventListener("mousemove", resize);
-  window.addEventListener("mouseup", stopResizing);
-  maxWidth.value = `${window.innerWidth * 0.8}px`;
-});
-
-onUnmounted(() => {
-  window.removeEventListener("mousemove", resize);
-  window.removeEventListener("mouseup", stopResizing);
-});
-
-const markAsAnswered = () => {
-  answeredQuestions.value += 1;
-};
-
-const selectAnswer = (questionId, option) => {
-  selectedAnswers.value[questionId] = option;
-  markAsAnswered();
-};
-
-const previousQuestion = () => {
-  if (currentQuestion.value > 1) {
-    currentQuestion.value -= 1;
+// Observar cambios en las preguntas y actualizar las respuestas guardadas
+watch(() => questions.value, (newQuestions) => {
+  totalQuestions.value = newQuestions.length;
+  const savedAnswers = localStorage.getItem('selectedAnswers');
+  if (savedAnswers) {
+    selectedAnswers.value = JSON.parse(savedAnswers);
+    updateAnsweredQuestions();
   }
-};
-
-const nextQuestion = () => {
-  if (currentQuestion.value < totalQuestions.value) {
-    currentQuestion.value += 1;
-  }
-};
-
-const toggleHelpImage = () => {
-  showHelpImage.value = !showHelpImage.value;
-};
-
-const openConfirmationDialog = () => {
-  showConfirmationDialog.value = true;
-};
-
-const finishExam = () => {
-  logInfo("Examen finalizado");
-  router.push({name: "ExamFinished"});
-};
-
-const zoomLevel = ref(100);
-
-const baseFontSize = computed(() => {
-  const calculatedSize = (zoomLevel.value / 100) * 16;
-  return `${Math.min(calculatedSize, 20.8)}px`;
-});
-
-const handleZoomChange = (newZoom) => {
-  zoomLevel.value = newZoom;
-  const container = document.querySelector(".container-question");
-  container.style.fontSize = baseFontSize.value;
-};
-
-onMounted(() => {
-  handleZoomChange(zoomLevel.value);
-});
+  logInfo(`Preguntas actualizadas. Total: ${totalQuestions.value}`);
+}, { deep: true });
 </script>
 
 <template>
@@ -147,92 +204,99 @@ onMounted(() => {
         :maxWidth="maxWidth"
         :answeredQuestions="answeredQuestions"
         :totalQuestions="totalQuestions"
+        :selectedAnswers="selectedAnswers"
+        :questions="questions"
+        @questionSelected="handleQuestionSelected"
     />
 
-    <div class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
-         @mousedown="startResizing"></div>
-    <section class="flex-grow bg-transparent shadow-md overflow-auto flex flex-col relative">
+    <div
+        class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
+        @mousedown="startResizing"
+    ></div>
+    <section
+        class="flex-grow bg-transparent shadow-md overflow-auto flex flex-col relative"
+    >
       <div class="flex-grow p-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-2">
           <div></div>
-          <p
-              class="text-red-500"
-          >
-            Tiempo restante:
-            <span class="font-semibold">{{ remainingTime }}</span>
+          <p class="text-red-500">
+            Tiempo restante: <span class="font-semibold">{{ formatTime(remainingTime) }}</span>
           </p>
-          <p>
-            Intentos: 1 de 0
-          </p>
+          <p>Intentos: 1 de 0</p>
         </div>
 
         <div class="bg-gray-200 h-2.5 mb-4">
-          <div class="bg-red-600 h-full w-1/2"></div>
+          <div class="bg-red-600 h-full" :style="{ width: `${(remainingTime / 2400) * 100}%` }"></div>
         </div>
-        <div class="bg-white px-5 pb-7 rounded shadow-md container-question">
+        <div v-if="currentQuestion" class="bg-white px-5 pb-7 rounded shadow-md container-question">
           <div class="w-full h-[53px] flex items-center border-b-2">
             <h3
                 class="font-semibold"
+                :class="{ hidden: isHidden }"
                 :style="{ fontSize: baseFontSize }"
             >
-              Tema: Obligaciones del conductor en materia de tránsito terrestre
+              Tema: {{ currentQuestion.TEMA }}
             </h3>
           </div>
 
           <div
-              v-for="question in questions"
-              :key="question.id"
-              v-show="question.id === currentQuestion"
               class="pb-11 pt-7"
+              :class="{ hidden: isHidden }"
           >
             <p class="mb-10 text-lg" :style="{ fontSize: baseFontSize }">
-              {{ question.id }}. {{ question.text }}
+              {{ currentQuestion.DESCRIPCIÓN_DE_LA_PREGUNTA }}
             </p>
-            <div v-if="question.imageUrl" class="flex justify-center mb-6">
+            <div v-if="currentQuestion.IMAGE_URL" class="flex justify-center mb-6">
               <img
-                  :src="question.imageUrl"
+                  :src="currentQuestion.IMAGE_URL"
                   alt="Imagen de referencia"
                   class="max-w-full h-auto"
               />
             </div>
             <div class="pl-6 flex flex-col gap-8">
               <div
-                  v-for="option in question.options"
-                  :key="option"
+                  v-for="(alternative, index) in ['ALTERNATIVA_1', 'ALTERNATIVA_2', 'ALTERNATIVA_3', 'ALTERNATIVA_4']"
+                  :key="index"
                   class="mb-4"
               >
                 <label
-                    class="flex items-center"
+                    class="flex items-center cursor-pointer"
                     :style="{ fontSize: baseFontSize }"
                 >
                   <input
                       type="radio"
-                      :name="`question${question.id}`"
-                      :value="option"
-                      :checked="selectedAnswers[question.id] === option"
-                      @change="selectAnswer(question.id, option)"
+                      :name="`question${currentQuestion.id}`"
+                      :value="currentQuestion[alternative]"
+                      :checked="selectedAnswers[currentQuestion.id] === currentQuestion[alternative]"
+                      @change="selectAnswer(currentQuestion.id, currentQuestion[alternative])"
+                      :style="{ width: radioButtonSize, height: radioButtonSize }"
                       class="mr-2"
                   />
-                  {{ option }}
+                  {{ currentQuestion[alternative] }}
                 </label>
               </div>
             </div>
           </div>
+        </div>
+        <div v-else class="text-center py-4">
+          No hay preguntas disponibles.
         </div>
         <div class="flex items-center justify-between mt-4">
           <div class="flex items-center space-x-4">
             <button
                 @click="previousQuestion"
                 class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
+                :disabled="!currentQuestion || questions.indexOf(currentQuestion) === 0"
             >
-              <ChevronLeft/>
+              <ChevronLeft />
             </button>
-            <span>{{ currentQuestion }}/{{ totalQuestions }}</span>
+            <span>{{ currentQuestion ? questions.findIndex(q => q.id === currentQuestion.id) + 1 : 0 }}/{{ totalQuestions }}</span>
             <button
                 @click="nextQuestion"
                 class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
+                :disabled="!currentQuestion || questions.indexOf(currentQuestion) === questions.length - 1"
             >
-              <ChevronRight/>
+              <ChevronRight />
             </button>
           </div>
           <button
@@ -243,22 +307,28 @@ onMounted(() => {
           </button>
         </div>
       </div>
-      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full">
+      <div
+          class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full"
+      >
         <button
-            v-if="currentQuestion === totalQuestions"
+            v-if="currentQuestion && currentQuestion.id === questions[totalQuestions - 1]?.id"
             @click="openConfirmationDialog"
             class="flex items-center justify-center gap-[5px] w-[190px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
           <span class="icon-[lucide--door-closed] text-[15px]"></span>
           FINALIZAR EXAMEN
         </button>
-        <ZoomControl :initialZoom="zoomLevel" @zoomChange="handleZoomChange" class="absolute right-4 bottom-0"/>
+        <ZoomControl
+            :initialZoom="zoomLevel"
+            @zoomChange="handleZoomChange"
+            class="absolute right-4 bottom-0"
+        />
       </div>
     </section>
   </main>
 
-  <Footer/>
-  <HelpImage :showHelpImage="showHelpImage" @close="toggleHelpImage"/>
+  <Footer />
+  <HelpImage :showHelpImage="showHelpImage" @close="toggleHelpImage" />
   <ConfirmationDialog
       v-model:isVisible="showConfirmationDialog"
       @confirmed="finishExam"
@@ -266,15 +336,20 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.hidden {
+  display: none;
+}
+
 ::-webkit-scrollbar {
-  @apply w-2.5;
+  width: 2.5px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background: #f3f3f3;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full;
+  background: #b8b8b8;
+  border-radius: 9999px;
 }
 </style>
