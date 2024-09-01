@@ -91,7 +91,7 @@ const getSelectedAlternative = (questionId) => {
     const question = props.questions.find(q => q.id === questionId);
     const alternatives = ['ALTERNATIVA_1', 'ALTERNATIVA_2', 'ALTERNATIVA_3', 'ALTERNATIVA_4'];
     const index = alternatives.findIndex(alt => question[alt] === props.selectedAnswers[questionId]);
-    return ['a', 'b', 'c', 'd'][index];
+    return ['A', 'B', 'C', 'D'][index];
   }
   return '';
 };
@@ -164,20 +164,20 @@ watch(() => props.questions, () => {
               <div
                   class="circle-alrt rounded-full fixed-size border-2 mr-2 flex items-center justify-center"
                   :class="{
-                  'border-gray-400': getQuestionStatus(question.id) === 'unanswered',
-                  'border-red-400 bg-red-400 text-white': getQuestionStatus(question.id) === 'answered'
-                }"
+                    'border-gray-400': getQuestionStatus(question.id) === 'unanswered',
+                    'border-red-400': getQuestionStatus(question.id) === 'answered'
+                  }"
               >
-                {{ getSelectedAlternative(question.id) }}
+                <span class="text-black">{{ getSelectedAlternative(question.id) }}</span>
               </div>
             </li>
           </ul>
         </div>
       </nav>
       <div class="resumen p-3 border-t-2">
-        <div class="w-full bg-red-600 rounded-full h-4 mb-2">
+        <div class="w-full bg-red-700 rounded-full h-4 mb-2">
           <div
-              class="bg-red-300 h-4 rounded-full"
+              class="bg-red-400 h-4 rounded-full"
               :style="{ width: `${progressPercentage}%` }"
           ></div>
         </div>
@@ -263,5 +263,13 @@ watch(() => props.questions, () => {
 
 * {
   font-size: 16px;
+}
+
+.resumen .bg-red-700 {
+  background-color: #f44336;
+}
+
+.resumen .bg-red-400 {
+  background-color: #b91c1c;
 }
 </style>

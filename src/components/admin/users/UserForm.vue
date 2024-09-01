@@ -1,11 +1,11 @@
 <script setup>
-import { ref, watch, computed } from "vue";
-import { Loader2, UserPlus, Save } from "lucide-vue-next";
-import { logError, logInfo } from "@/utils/logger.js";
+import {ref, watch, computed} from "vue";
+import {Loader2, UserPlus, Save} from "lucide-vue-next";
+import {logError, logInfo} from "@/utils/logger.js";
 import InputField from "@/elements/admin/users/InputField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ExcelButtons from "@/elements/admin/users/ExcelButtons.vue";
-import { userService } from "@/services/user_service.js";
+import {userService} from "@/services/user_service.js";
 
 const props = defineProps({
   userToEdit: {
@@ -59,12 +59,12 @@ const resetForm = () => {
 
 watch(() => props.userToEdit, (newValue) => {
   if (newValue) {
-    newUser.value = { ...newValue, categoria: newValue.categoria.replace('-', '') };
+    newUser.value = {...newValue, categoria: newValue.categoria.replace('-', '')};
     isEditing.value = true;
   } else {
     resetForm();
   }
-}, { immediate: true });
+}, {immediate: true});
 
 const saveUser = async () => {
   if (
@@ -151,14 +151,16 @@ const handleDateChange = (event) => {
     newUser.value.fechaNacimiento = date;
   } else {
     logError("El usuario debe ser mayor de 18 años");
+    event.target.value = "";
     newUser.value.fechaNacimiento = "";
   }
 };
 
-// Set default date to 18 years ago
-const defaultDate = new Date();
-defaultDate.setFullYear(defaultDate.getFullYear() - 18);
-newUser.value.fechaNacimiento = defaultDate.toISOString().split('T')[0];
+const maxDate = computed(() => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 18);
+  return date.toISOString().split('T')[0];
+});
 </script>
 
 <template>
@@ -207,6 +209,7 @@ newUser.value.fechaNacimiento = defaultDate.toISOString().split('T')[0];
           label="F. Nacimiento"
           type="date"
           :flex="0.15"
+          :max="maxDate"
           required
           @change="handleDateChange"
       />

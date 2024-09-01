@@ -44,7 +44,7 @@ const loadQuestionnaire = (data) => {
           questionData.ALTERNATIVA_3,
           questionData.ALTERNATIVA_4
         ],
-        correctOption: ['a', 'b', 'c', 'd'].indexOf(questionData.RESPUESTA.toLowerCase()),
+        correctOption: ['A', 'B', 'C', 'D'].indexOf(questionData.RESPUESTA.toUpperCase()),
         image: null,
         imageUrl: questionData.IMAGE_URL || null,
         imagePreview: questionData.IMAGE_URL || null,
@@ -166,14 +166,13 @@ const saveQuestionnaire = async () => {
     logInfo("Guardando cuestionario...");
     logDebug("Datos del cuestionario a guardar:", questionnaire.value);
 
-    // Subir imágenes y actualizar URLs
     for (const question of questionnaire.value.questions) {
       if (question.image instanceof File) {
         const imageUrl = await uploadImage(question.image);
         question.imageUrl = imageUrl;
       }
-      // Convertir la categoría antes de guardar
       question.category = reverseCategoryMap(question.category);
+      question.correctOption = ['A', 'B', 'C', 'D'][question.correctOption];
     }
 
     await updateQuestionnaire(questionnaire.value);

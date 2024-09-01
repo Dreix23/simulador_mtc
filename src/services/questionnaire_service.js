@@ -25,10 +25,14 @@ export const getQuestionnaires = async () => {
 const fetchAndCacheQuestionnaires = async () => {
     const questionnaireRef = collection(db, 'questionnaire');
     const snapshot = await getDocs(questionnaireRef);
-    const questionnaires = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    }));
+    const questionnaires = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            RESPUESTA: data.RESPUESTA ? data.RESPUESTA.toUpperCase() : data.RESPUESTA
+        };
+    });
 
     const uniqueThemes = [...new Set(questionnaires.map(q => q.TEMA || 'Sin tema'))];
     const groupedQuestionnaires = uniqueThemes.reduce((acc, tema) => {
@@ -98,7 +102,23 @@ const uploadToFirestore = async (data) => {
 
         headers.forEach((header, index) => {
             if (header && row[index] !== undefined && header !== 'Nº') {
-                doc[header.replace(/ /g, '_').toUpperCase()] = row[index];
+                let value = row[index];
+
+                if (header.startsWith('ALTERNATIVA')) {
+                    const letter = String.fromCharCode(65 + parseInt(header.slice(-1)) - 1);
+                    value = value.replace(/^[a-d]\)/, `${letter}.`);
+                }
+
+                if (header === 'RESPUESTA') {
+                    value = value.trim().toUpperCase();
+                }
+
+                if (header === 'DESCRIPCIÓN DE LA PREGUNTA') {
+                    value = value.replace(/\s{3,}/g, ' ___________');
+                    value = value.replace(/_{2,}/g, '___________ ');
+                }
+
+                doc[header.replace(/ /g, '_').toUpperCase()] = value;
             }
         });
 
@@ -137,7 +157,7 @@ export const updateQuestionnaire = async (questionnaire) => {
                 ALTERNATIVA_2: question.options[1],
                 ALTERNATIVA_3: question.options[2],
                 ALTERNATIVA_4: question.options[3],
-                RESPUESTA: ['a', 'b', 'c', 'd'][question.correctOption],
+                RESPUESTA: ['A', 'B', 'C', 'D'][question.correctOption],
                 CATEGORIA: question.category,
                 TIPO_DE_MATERIA: question.tipo_de_materia,
                 FUNDAMENTO: question.fundamento,
