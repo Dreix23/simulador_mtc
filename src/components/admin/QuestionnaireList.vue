@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { Plus, Edit, Loader2 } from "lucide-vue-next";
 import { logInfo, logError } from "@/utils/logger.js";
-import { getQuestionnaires, uploadExcelToFirestore } from '@/services/questionnaire_service';
+import { getQuestionnaires, uploadExcelToFirestore, initializeRealtimeSync } from '@/services/questionnaire_service';
 
 const groupedQuestionnaires = ref({});
 const emit = defineEmits(["editQuestionnaire"]);
@@ -10,8 +10,20 @@ const loading = ref(false);
 const uploading = ref(false);
 const fileInput = ref(null);
 
+let unsubscribe = null;
+
 onMounted(async () => {
   await loadQuestionnaires();
+  unsubscribe = initializeRealtimeSync((updatedQuestionnaires) => {
+    groupedQuestionnaires.value = updatedQuestionnaires;
+    logInfo("Cuestionarios actualizados en tiempo real");
+  });
+});
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+  }
 });
 
 const loadQuestionnaires = async () => {
@@ -19,7 +31,6 @@ const loadQuestionnaires = async () => {
     loading.value = true;
     groupedQuestionnaires.value = await getQuestionnaires();
     logInfo("Cuestionarios obtenidos y agrupados exitosamente");
-    console.log("Datos de cuestionarios:", JSON.parse(JSON.stringify(groupedQuestionnaires.value)));
   } catch (error) {
     logError('Error al cargar los cuestionarios:', error);
   } finally {
@@ -46,7 +57,6 @@ const handleFileUpload = async (event) => {
     try {
       await uploadExcelToFirestore(file);
       logInfo("Datos subidos exitosamente a Firestore");
-      await loadQuestionnaires();
     } catch (error) {
       logError('Error al procesar el archivo:', error);
     } finally {
@@ -75,21 +85,21 @@ const handleFileUpload = async (event) => {
             :disabled="uploading"
         >
           <span v-if="!uploading" class="icon-[tabler--file-type-xls] text-size-20 mr-2"></span>
-          <Loader2 v-else class="animate-spin mr-2 h-5 w-5" />
+          <Loader2 v-else class="animate-spin mr-2 h-5 w-5"/>
           {{ uploading ? 'Subiendo...' : 'Subir Excel' }}
         </button>
         <button
             @click="editQuestionnaire(null)"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          <Plus class="h-5 w-5 mr-2" />
+          <Plus class="h-5 w-5 mr-2"/>
           Crear Cuestionario
         </button>
       </div>
     </div>
 
     <div v-if="loading" class="flex justify-center items-center h-40">
-      <Loader2 class="animate-spin h-8 w-8 text-indigo-600" />
+      <Loader2 class="animate-spin h-8 w-8 text-indigo-600"/>
     </div>
 
     <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -107,7 +117,7 @@ const handleFileUpload = async (event) => {
                 @click="editQuestionnaire(tema)"
                 class="text-indigo-600 hover:text-indigo-800 focus:outline-none"
             >
-              <Edit class="h-5 w-5" />
+              <Edit class="h-5 w-5"/>
             </button>
           </div>
           <p class="text-sm text-gray-500">

@@ -1,30 +1,64 @@
 import { db, storage } from '@/services/firebase';
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { logInfo, logError } from "@/utils/logger.js";
+import { logInfo, logError, logDebug } from "@/utils/logger.js";
 import * as XLSX from 'xlsx';
+
+const CACHE_KEY = 'questionnaires_cache';
 
 export const getQuestionnaires = async () => {
     try {
-        const questionnaireRef = collection(db, 'questionnaire');
-        const snapshot = await getDocs(questionnaireRef);
-        const questionnaires = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const cachedData = localStorage.getItem(CACHE_KEY);
 
-        const uniqueThemes = [...new Set(questionnaires.map(q => q.TEMA || 'Sin tema'))];
-        const groupedQuestionnaires = uniqueThemes.reduce((acc, tema) => {
-            acc[tema] = questionnaires.filter(q => q.TEMA === tema);
-            return acc;
-        }, {});
+        if (cachedData) {
+            logDebug('Usando datos en caché');
+            return JSON.parse(cachedData);
+        }
 
-        logInfo('Cuestionarios obtenidos y agrupados exitosamente');
-        return groupedQuestionnaires;
+        return await fetchAndCacheQuestionnaires();
     } catch (error) {
         logError('Error al obtener los cuestionarios:', error);
         throw error;
     }
+};
+
+const fetchAndCacheQuestionnaires = async () => {
+    const questionnaireRef = collection(db, 'questionnaire');
+    const snapshot = await getDocs(questionnaireRef);
+    const questionnaires = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+
+    const uniqueThemes = [...new Set(questionnaires.map(q => q.TEMA || 'Sin tema'))];
+    const groupedQuestionnaires = uniqueThemes.reduce((acc, tema) => {
+        acc[tema] = questionnaires.filter(q => q.TEMA === tema);
+        return acc;
+    }, {});
+
+    localStorage.setItem(CACHE_KEY, JSON.stringify(groupedQuestionnaires));
+    logInfo('Cuestionarios obtenidos y guardados en caché');
+    return groupedQuestionnaires;
+};
+
+export const initializeRealtimeSync = (callback) => {
+    const questionnaireRef = collection(db, 'questionnaire');
+    return onSnapshot(questionnaireRef, async (snapshot) => {
+        let hasChanges = false;
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added" || change.type === "modified" || change.type === "removed") {
+                logDebug(`Documento ${change.doc.id} ${change.type}`);
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            const updatedQuestionnaires = await fetchAndCacheQuestionnaires();
+            if (callback) {
+                callback(updatedQuestionnaires);
+            }
+        }
+    });
 };
 
 export const uploadExcelToFirestore = async (file) => {

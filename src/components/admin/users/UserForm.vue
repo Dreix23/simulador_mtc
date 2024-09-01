@@ -1,11 +1,20 @@
 <script setup>
-import { ref } from "vue";
-import { Loader2, UserPlus } from "lucide-vue-next";
+import { ref, watch, computed } from "vue";
+import { Loader2, UserPlus, Save } from "lucide-vue-next";
 import { logError, logInfo } from "@/utils/logger.js";
 import InputField from "@/elements/admin/users/InputField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ExcelButtons from "@/elements/admin/users/ExcelButtons.vue";
 import { userService } from "@/services/user_service.js";
+
+const props = defineProps({
+  userToEdit: {
+    type: Object,
+    default: null,
+  },
+});
+
+const emit = defineEmits(['userAdded', 'userUpdated']);
 
 const documentTypes = [
   "DNI",
@@ -16,12 +25,13 @@ const documentTypes = [
 ];
 
 const newUser = ref({
+  id: null,
   tipoDocumento: "DNI",
   numeroDocumento: "",
   apellidos: "",
   nombre: "",
   fechaNacimiento: "",
-  categoria: "A-I",
+  categoria: "AI",
   imagen: null,
 });
 
@@ -31,7 +41,32 @@ const isLoading = ref({
   uploadExcel: false,
 });
 
-const addUser = async () => {
+const isEditing = ref(false);
+
+const resetForm = () => {
+  newUser.value = {
+    id: null,
+    tipoDocumento: "DNI",
+    numeroDocumento: "",
+    apellidos: "",
+    nombre: "",
+    fechaNacimiento: "",
+    categoria: "AI",
+    imagen: null,
+  };
+  isEditing.value = false;
+};
+
+watch(() => props.userToEdit, (newValue) => {
+  if (newValue) {
+    newUser.value = { ...newValue, categoria: newValue.categoria.replace('-', '') };
+    isEditing.value = true;
+  } else {
+    resetForm();
+  }
+}, { immediate: true });
+
+const saveUser = async () => {
   if (
       !newUser.value.numeroDocumento ||
       !newUser.value.apellidos ||
@@ -43,19 +78,22 @@ const addUser = async () => {
   }
   isLoading.value.addUser = true;
   try {
-    const addedUser = await userService.addUser(newUser.value);
-    logInfo("Usuario agregado con éxito");
-    newUser.value = {
-      tipoDocumento: "DNI",
-      numeroDocumento: "",
-      apellidos: "",
-      nombre: "",
-      fechaNacimiento: "",
-      categoria: "A-I",
-      imagen: null,
+    const userToSave = {
+      ...newUser.value,
+      categoria: newUser.value.categoria.replace('-', ''),
     };
+    if (isEditing.value) {
+      const updatedUser = await userService.updateUser(userToSave);
+      logInfo("Usuario actualizado con éxito");
+      emit('userUpdated', updatedUser);
+    } else {
+      const addedUser = await userService.addUser(userToSave);
+      logInfo("Usuario agregado con éxito");
+      emit('userAdded', addedUser);
+    }
+    resetForm();
   } catch (error) {
-    logError(`Error al añadir usuario: ${error.message}`);
+    logError(`Error al ${isEditing.value ? 'actualizar' : 'añadir'} usuario: ${error.message}`);
   } finally {
     isLoading.value.addUser = false;
   }
@@ -80,10 +118,19 @@ const categories = [
   "BII-C",
 ];
 
+const displayCategories = computed(() => {
+  return categories.map(category => ({
+    value: category.replace('-', ''),
+    label: category
+  }));
+});
+
 const getColorClass = (color) => {
   switch (color) {
-    case 'indigo': return 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500';
-    default: return 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500';
+    case 'indigo':
+      return 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500';
+    default:
+      return 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500';
   }
 };
 
@@ -171,11 +218,11 @@ newUser.value.fechaNacimiento = defaultDate.toISOString().split('T')[0];
             class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-2 border-gray-300 rounded-md h-12 px-3 cursor-pointer"
         >
           <option
-              v-for="category in categories"
-              :key="category"
-              :value="category"
+              v-for="category in displayCategories"
+              :key="category.value"
+              :value="category.value"
           >
-            {{ category }}
+            {{ category.label }}
           </option>
         </select>
       </div>
@@ -186,9 +233,9 @@ newUser.value.fechaNacimiento = defaultDate.toISOString().split('T')[0];
           @update:is-loading="(newValue) => isLoading = { ...isLoading, ...newValue }"
       />
       <div class="flex items-center gap-[16px]">
-        <ImageUpload v-model="newUser.imagen" @change="handleImageUpload" />
+        <ImageUpload v-model="newUser.imagen" @change="handleImageUpload"/>
         <button
-            @click="addUser"
+            @click="saveUser"
             :disabled="isLoading.addUser || !newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre || !newUser.fechaNacimiento"
             :class="[
             'w-40 cursor-pointer inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 h-12',
@@ -196,9 +243,10 @@ newUser.value.fechaNacimiento = defaultDate.toISOString().split('T')[0];
             { 'opacity-50 cursor-not-allowed': isLoading.addUser || !newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre || !newUser.fechaNacimiento }
           ]"
         >
-          <Loader2 v-if="isLoading.addUser" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
-          <UserPlus v-else class="-ml-1 mr-3 h-5 w-5" />
-          Guardar
+          <Loader2 v-if="isLoading.addUser" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"/>
+          <UserPlus v-else-if="!isEditing" class="-ml-1 mr-3 h-5 w-5"/>
+          <Save v-else class="-ml-1 mr-3 h-5 w-5"/>
+          {{ isEditing ? 'Actualizar' : 'Guardar' }}
         </button>
       </div>
     </div>

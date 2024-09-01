@@ -10,7 +10,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['userDeleted']);
+const emit = defineEmits(['userDeleted', 'editUser']);
 
 const deleteUser = async (userId) => {
   try {
@@ -20,6 +20,10 @@ const deleteUser = async (userId) => {
   } catch (error) {
     logError(`Error al eliminar usuario: ${error.message}`);
   }
+};
+
+const editUser = (user) => {
+  emit('editUser', user);
 };
 </script>
 
@@ -52,7 +56,7 @@ const deleteUser = async (userId) => {
           </td>
           <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
             <div class="flex justify-center space-x-4">
-              <button class="text-indigo-600 hover:text-indigo-900">
+              <button @click="editUser(user)" class="text-indigo-600 hover:text-indigo-900">
                 <Edit2 class="h-5 w-5" />
               </button>
               <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-900">
