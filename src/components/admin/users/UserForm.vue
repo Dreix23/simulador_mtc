@@ -5,7 +5,7 @@ import {logError, logInfo} from "@/utils/logger.js";
 import InputField from "@/elements/admin/users/InputField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ExcelButtons from "@/elements/admin/users/ExcelButtons.vue";
-import {userService} from "@/services/user_service.js";
+import { userService } from "@/services/user_service.js";
 
 const props = defineProps({
   userToEdit: {
@@ -183,7 +183,7 @@ const maxDate = computed(() => {
               :placeholder="newUser.tipoDocumento"
               maxlength="20"
               :flex="1"
-              type="number"
+              type="text"
           />
         </div>
       </div>

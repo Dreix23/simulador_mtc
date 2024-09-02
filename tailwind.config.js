@@ -4,6 +4,9 @@ export default {
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      screens:{
+       'max-1560': {'max': '1560px'},
+      },
       fontSize: {
         "size-10": "10px",
         "size-11": "11px",

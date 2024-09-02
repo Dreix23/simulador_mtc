@@ -125,7 +125,7 @@ watch(() => props.questions, () => {
       <img
           :src="userData?.imagenUrl || '/path/to/default/image.png'"
           alt=""
-          class="w-[150px] h-[165px] p-[5px] border rounded-[5px] object-cover"
+          class="w-[112px] h-[122px] p-[5px] border rounded-[5px] object-cover"
       />
       <p class="uppercase text-size-16 font-medium">
         {{ userData?.nombre }} {{ userData?.apellidos }}
