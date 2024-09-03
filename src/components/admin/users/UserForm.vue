@@ -30,7 +30,6 @@ const newUser = ref({
   numeroDocumento: "",
   apellidos: "",
   nombre: "",
-  fechaNacimiento: "",
   categoria: "AI",
   imagen: null,
 });
@@ -50,7 +49,6 @@ const resetForm = () => {
     numeroDocumento: "",
     apellidos: "",
     nombre: "",
-    fechaNacimiento: "",
     categoria: "AI",
     imagen: null,
   };
@@ -70,8 +68,7 @@ const saveUser = async () => {
   if (
       !newUser.value.numeroDocumento ||
       !newUser.value.apellidos ||
-      !newUser.value.nombre ||
-      !newUser.value.fechaNacimiento
+      !newUser.value.nombre
   ) {
     logError("Todos los campos son obligatorios");
     return;
@@ -133,40 +130,12 @@ const getColorClass = (color) => {
       return 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500';
   }
 };
-
-const isAdult = (dateString) => {
-  const today = new Date();
-  const birthDate = new Date(dateString);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age >= 18;
-};
-
-const handleDateChange = (event) => {
-  const date = event.target.value;
-  if (isAdult(date)) {
-    newUser.value.fechaNacimiento = date;
-  } else {
-    logError("El usuario debe ser mayor de 18 años");
-    event.target.value = "";
-    newUser.value.fechaNacimiento = "";
-  }
-};
-
-const maxDate = computed(() => {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - 18);
-  return date.toISOString().split('T')[0];
-});
 </script>
 
 <template>
   <div class="flex flex-col gap-4 mb-6">
-    <div class="flex justify-between items-center">
-      <div class="flex-[0.2] justify-start">
+    <div class="flex justify-between items-center space-x-4">
+      <div class="flex-[0.2]">
         <select
             v-model="newUser.tipoDocumento"
             class="text-sm bg-transparent border-none focus:ring-0 z-10 cursor-pointer"
@@ -175,17 +144,14 @@ const maxDate = computed(() => {
             {{ type }}
           </option>
         </select>
-
-        <div class="mt-[8px]">
-          <InputField
-              id="numeroDocumento"
-              v-model="newUser.numeroDocumento"
-              :placeholder="newUser.tipoDocumento"
-              maxlength="20"
-              :flex="1"
-              type="text"
-          />
-        </div>
+        <InputField
+            id="numeroDocumento"
+            v-model="newUser.numeroDocumento"
+            :placeholder="newUser.tipoDocumento"
+            maxlength="20"
+            :flex="1"
+            type="text"
+        />
       </div>
       <InputField
           id="apellidos"
@@ -193,7 +159,7 @@ const maxDate = computed(() => {
           label="Apellidos"
           placeholder="Apellidos"
           :flex="0.5"
-          class="flex-[0.32]"
+          class="flex-[0.25]"
       />
       <InputField
           id="nombre"
@@ -201,19 +167,13 @@ const maxDate = computed(() => {
           label="Nombre"
           placeholder="Nombre"
           :flex="0.25"
-          class="flex-[0.32]"
+          class="flex-[0.25]"
       />
-      <InputField
-          id="fechaNacimiento"
-          v-model="newUser.fechaNacimiento"
-          label="F. Nacimiento"
-          type="date"
-          :flex="0.15"
-          :max="maxDate"
-          required
-          @change="handleDateChange"
-      />
-      <div class="flex-[0.1]">
+      <div class="flex-[0.15]">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Imagen</label>
+        <ImageUpload v-model="newUser.imagen" @change="handleImageUpload"/>
+      </div>
+      <div class="flex-[0.15]">
         <label class="block text-sm font-medium text-gray-700 mb-2">Categorías</label>
         <select
             id="categories"
@@ -236,14 +196,13 @@ const maxDate = computed(() => {
           @update:is-loading="(newValue) => isLoading = { ...isLoading, ...newValue }"
       />
       <div class="flex items-center gap-[16px]">
-        <ImageUpload v-model="newUser.imagen" @change="handleImageUpload"/>
         <button
             @click="saveUser"
-            :disabled="isLoading.addUser || !newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre || !newUser.fechaNacimiento"
+            :disabled="isLoading.addUser || !newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre"
             :class="[
             'w-40 cursor-pointer inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 h-12',
             getColorClass('indigo'),
-            { 'opacity-50 cursor-not-allowed': isLoading.addUser || !newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre || !newUser.fechaNacimiento }
+            { 'opacity-50 cursor-not-allowed': isLoading.addUser || !newUser.numeroDocumento || !newUser.apellidos || !newUser.nombre }
           ]"
         >
           <Loader2 v-if="isLoading.addUser" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"/>

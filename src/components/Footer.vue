@@ -1,20 +1,60 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted, shallowRef } from "vue";
 import { useRoute } from "vue-router";
 import { Siren } from "lucide-vue-next";
 import MacImg from "@/assets/images/mac.svg";
-import { logInfo } from '@/utils/logger.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
+import { FooterService } from '@/services/footer_service';
 
 const currentYear = new Date().getFullYear();
-const ip = "192.168.140.142";
-const mac = "6C-4B-90-B9-B7-2D";
+const ip = shallowRef("No asignada");
+const mac = shallowRef("No asignada");
+const deviceId = shallowRef("");
 
 const route = useRoute();
-const isRootRoute = ref(route.path === "/");
+const isRootRoute = shallowRef(route.path === "/");
 
-onMounted(() => {
+let unsubscribe = null;
+
+const loadLocalData = () => {
+  const cachedData = localStorage.getItem('deviceInfo');
+  if (cachedData) {
+    const { ip: cachedIp, mac: cachedMac } = JSON.parse(cachedData);
+    ip.value = cachedIp || "No asignada";
+    mac.value = cachedMac || "No asignada";
+    logDebug('Datos cargados desde localStorage');
+  }
+};
+
+onMounted(async () => {
   isRootRoute.value = route.path === "/";
   logInfo("Footer component mounted");
+
+  loadLocalData(); // Carga los datos del localStorage inmediatamente
+
+  try {
+    deviceId.value = await FooterService.getOrCreateDeviceIdentifier();
+    if (deviceId.value) {
+      unsubscribe = FooterService.subscribeToDeviceInfo(deviceId.value, (deviceInfo) => {
+        if (deviceInfo) {
+          ip.value = deviceInfo.ip || "No asignada";
+          mac.value = deviceInfo.mac || "No asignada";
+          logInfo(`Información del dispositivo actualizada: IP=${ip.value}, MAC=${mac.value}`);
+
+          // Actualizar localStorage con los nuevos datos
+          localStorage.setItem('deviceInfo', JSON.stringify({ ip: ip.value, mac: mac.value }));
+        }
+      });
+    }
+  } catch (error) {
+    logError(`Error al inicializar el componente Footer: ${error.message}`);
+  }
+});
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+  }
 });
 </script>
 
@@ -57,19 +97,19 @@ onMounted(() => {
 <style scoped>
 @media screen and (max-width: 1599px) {
   .responsive-footer {
-    height: 27px; /* Reducción del 10% de 30px */
-    padding-top: 4.5px; /* Ajuste para centrar verticalmente el contenido */
-    padding-bottom: 4.5px; /* Ajuste para centrar verticalmente el contenido */
-    font-size: 12px; /* Reducción del 10% de 13px */
+    height: 27px;
+    padding-top: 4.5px;
+    padding-bottom: 4.5px;
+    font-size: 12px;
   }
 
   .responsive-footer .icon-\[mdi--ip-network\] {
-    font-size: 15.2px; /* Reducción del 5% de 16px */
+    font-size: 15.2px;
   }
 
   .responsive-footer .w-\[20px\] {
-    width: 19px; /* Reducción del 5% de 20px */
-    height: 19px; /* Reducción del 5% de 20px */
+    width: 19px;
+    height: 19px;
   }
 }
 </style>
