@@ -1,14 +1,31 @@
 import { db } from './firebase';
-import { doc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
 export const FooterService = {
     async getOrCreateDeviceIdentifier() {
         try {
             const deviceId = this.generateDeviceId();
-            const docRef = doc(db, 'devices', deviceId);
-            await setDoc(docRef, {}, { merge: true });
-            logInfo(`Dispositivo registrado/actualizado: ${deviceId}`);
+            const cachedData = localStorage.getItem('deviceInfo');
+
+            if (!cachedData) {
+                const docRef = doc(db, 'devices', deviceId);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    const defaultData = {
+                        ip: 'No asignada',
+                        mac: 'No asignada',
+                        createdAt: new Date().toISOString()
+                    };
+                    await setDoc(docRef, defaultData);
+                    localStorage.setItem('deviceInfo', JSON.stringify(defaultData));
+                    logInfo(`Nuevo dispositivo registrado: ${deviceId}`);
+                } else {
+                    localStorage.setItem('deviceInfo', JSON.stringify(docSnap.data()));
+                }
+            }
+
             return deviceId;
         } catch (error) {
             logError(`Error al obtener/crear identificador de dispositivo: ${error.message}`);
@@ -30,15 +47,18 @@ export const FooterService = {
     },
 
     subscribeToDeviceInfo(deviceId, callback) {
-        const docRef = doc(db, 'devices', deviceId);
+        if (!deviceId) {
+            logError('DeviceId no proporcionado para la suscripción');
+            return () => {};
+        }
 
-        // Primero, intentamos obtener los datos del localStorage
         const cachedData = localStorage.getItem('deviceInfo');
         if (cachedData) {
             callback(JSON.parse(cachedData));
         }
 
-        // Luego, nos suscribimos a los cambios en Firebase
+        const docRef = doc(db, 'devices', deviceId);
+
         return onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
@@ -46,7 +66,6 @@ export const FooterService = {
                 callback(data);
                 logDebug('Datos del dispositivo actualizados desde Firebase');
             } else {
-                localStorage.removeItem('deviceInfo');
                 callback(null);
                 logDebug('No se encontraron datos del dispositivo en Firebase');
             }
@@ -64,15 +83,8 @@ export const FooterService = {
                 lastUpdated: new Date().toISOString()
             };
 
-            // Actualizamos primero el localStorage
-            const cachedData = localStorage.getItem('deviceInfo');
-            if (cachedData) {
-                const updatedData = { ...JSON.parse(cachedData), ...updateData };
-                localStorage.setItem('deviceInfo', JSON.stringify(updatedData));
-            }
-
-            // Luego actualizamos Firebase
             await updateDoc(docRef, updateData);
+            localStorage.setItem('deviceInfo', JSON.stringify(updateData));
             logInfo(`Información del dispositivo actualizada: IP=${ip}, MAC=${mac}`);
             return true;
         } catch (error) {

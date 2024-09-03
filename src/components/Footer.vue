@@ -30,7 +30,7 @@ onMounted(async () => {
   isRootRoute.value = route.path === "/";
   logInfo("Footer component mounted");
 
-  loadLocalData(); // Carga los datos del localStorage inmediatamente
+  loadLocalData();
 
   try {
     deviceId.value = await FooterService.getOrCreateDeviceIdentifier();
@@ -40,9 +40,6 @@ onMounted(async () => {
           ip.value = deviceInfo.ip || "No asignada";
           mac.value = deviceInfo.mac || "No asignada";
           logInfo(`Información del dispositivo actualizada: IP=${ip.value}, MAC=${mac.value}`);
-
-          // Actualizar localStorage con los nuevos datos
-          localStorage.setItem('deviceInfo', JSON.stringify({ ip: ip.value, mac: mac.value }));
         }
       });
     }
