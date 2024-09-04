@@ -10,6 +10,7 @@ const currentYear = new Date().getFullYear();
 const ip = shallowRef("No asignada");
 const mac = shallowRef("No asignada");
 const deviceId = shallowRef("");
+const deviceToken = shallowRef("");
 
 const route = useRoute();
 const isRootRoute = shallowRef(route.path === "/");
@@ -19,9 +20,11 @@ let unsubscribe = null;
 const loadLocalData = () => {
   const cachedData = localStorage.getItem('deviceInfo');
   if (cachedData) {
-    const { ip: cachedIp, mac: cachedMac } = JSON.parse(cachedData);
+    const { ip: cachedIp, mac: cachedMac, deviceId: cachedId, deviceToken: cachedToken } = JSON.parse(cachedData);
     ip.value = cachedIp || "No asignada";
     mac.value = cachedMac || "No asignada";
+    deviceId.value = cachedId || "";
+    deviceToken.value = cachedToken || "";
     logDebug('Datos cargados desde localStorage');
   }
 };
@@ -33,13 +36,25 @@ onMounted(async () => {
   loadLocalData();
 
   try {
-    deviceId.value = await FooterService.getOrCreateDeviceIdentifier();
+    if (!deviceId.value || !deviceToken.value) {
+      const { id, token } = await FooterService.getOrCreateDeviceIdentifier();
+      deviceId.value = id;
+      deviceToken.value = token;
+      logInfo(`Nuevo dispositivo creado: ID=${id}, Token=${token}`);
+    }
+
     if (deviceId.value) {
       unsubscribe = FooterService.subscribeToDeviceInfo(deviceId.value, (deviceInfo) => {
         if (deviceInfo) {
           ip.value = deviceInfo.ip || "No asignada";
           mac.value = deviceInfo.mac || "No asignada";
           logInfo(`Información del dispositivo actualizada: IP=${ip.value}, MAC=${mac.value}`);
+          localStorage.setItem('deviceInfo', JSON.stringify({
+            ip: ip.value,
+            mac: mac.value,
+            deviceId: deviceId.value,
+            deviceToken: deviceToken.value
+          }));
         }
       });
     }
@@ -76,7 +91,7 @@ onUnmounted(() => {
     </div>
     <div class="flex flex-row items-center pr-[60px]">
       <div class="border-l-2 pl-[4px] mr-[60px]">
-        <Siren class="w-[20px]" />
+        <Siren class="w-[20px]"/>
       </div>
       <div class="border-l-2 border-r-2 pr-[15px] pl-[4px]">
         <span class="truncate">.NET 7.0.0.28</span>
