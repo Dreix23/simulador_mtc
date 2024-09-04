@@ -58,7 +58,7 @@ header {
   box-shadow: 0px 4px 11.3px 0px rgba(0, 0, 0, 0.25);
 }
 
-@media screen and (max-width: 1599px) {
+@media screen and (max-width: 1800px) {
   .responsive-header {
     height: 78px; /* Reducción del 10% de 87px */
     padding-top: 13.5px; /* Reducción del 10% de 15px */

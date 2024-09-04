@@ -108,7 +108,7 @@ const startExam = () => {
 </template>
 
 <style scoped>
-@media screen and (max-width: 1599px) {
+@media screen and (max-width: 1800px) {
   .responsive-container {
     transform: scale(0.9);
     transform-origin: top center;
