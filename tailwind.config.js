@@ -28,6 +28,7 @@ export default {
         "color-purple-2": "#E6E7EC",
         "color-blue-max": "#0A1B39",
         "color-green": "#16a34a",
+        "color-yellow": "#FFFE05",
       },
       boxShadow: {
         "shadow-form": "0px 0px 10.2px 0px rgba(0, 0, 0, 0.75);",
