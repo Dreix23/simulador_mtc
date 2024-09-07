@@ -12,6 +12,7 @@ import { logInfo, logError, logDebug } from "@/utils/logger.js";
 import {
   getQuestionsByCategory,
   unsubscribeFromQuestions,
+  getDecryptedResponse,
 } from "@/services/questions_service.js";
 import { saveExamResults } from "@/services/results_service.js";
 
@@ -35,8 +36,8 @@ const formatTime = (seconds) => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-    .toString()
-    .padStart(2, "0")}`;
+      .toString()
+      .padStart(2, "0")}`;
 };
 
 const startTimer = () => {
@@ -53,10 +54,18 @@ const startTimer = () => {
 
 onMounted(async () => {
   try {
-    questions.value = await getQuestionsByCategory();
+    const savedQuestions = localStorage.getItem("examQuestions");
+    if (savedQuestions) {
+      questions.value = JSON.parse(savedQuestions);
+      logInfo("Usando preguntas guardadas del examen en progreso");
+    } else {
+      questions.value = await getQuestionsByCategory();
+      localStorage.setItem("examQuestions", JSON.stringify(questions.value));
+      logInfo("Nuevas preguntas cargadas y guardadas");
+    }
+
     totalQuestions.value = questions.value.length;
     currentQuestion.value = questions.value[0] || null;
-    logInfo(`Se cargaron ${totalQuestions.value} preguntas`);
 
     const savedAnswers = localStorage.getItem("selectedAnswers");
     if (savedAnswers) {
@@ -97,8 +106,8 @@ const selectAnswer = (questionId, option) => {
   selectedAnswers.value[questionId] = option;
   updateAnsweredQuestions();
   localStorage.setItem(
-    "selectedAnswers",
-    JSON.stringify(selectedAnswers.value)
+      "selectedAnswers",
+      JSON.stringify(selectedAnswers.value)
   );
   logDebug(`Respuesta seleccionada para la pregunta ${questionId}: ${option}`);
 };
@@ -106,7 +115,7 @@ const selectAnswer = (questionId, option) => {
 const previousQuestion = () => {
   if (!currentQuestion.value) return;
   const currentIndex = questions.value.findIndex(
-    (q) => q.id === currentQuestion.value.id
+      (q) => q.id === currentQuestion.value.id
   );
   if (currentIndex > 0) {
     currentQuestion.value = questions.value[currentIndex - 1];
@@ -116,7 +125,7 @@ const previousQuestion = () => {
 const nextQuestion = () => {
   if (!currentQuestion.value) return;
   const currentIndex = questions.value.findIndex(
-    (q) => q.id === currentQuestion.value.id
+      (q) => q.id === currentQuestion.value.id
   );
   if (currentIndex < totalQuestions.value - 1) {
     currentQuestion.value = questions.value[currentIndex + 1];
@@ -132,8 +141,14 @@ const openConfirmationDialog = () => {
 };
 
 const calculateScore = () => {
-  const score = (answeredQuestions.value / totalQuestions.value) * 100;
-  return Math.round(score * 100) / 100;
+  let correctAnswers = 0;
+  for (const [questionId, selectedAnswer] of Object.entries(selectedAnswers.value)) {
+    const question = questions.value.find(q => q.id === questionId);
+    if (question && getDecryptedResponse(question) === selectedAnswer) {
+      correctAnswers++;
+    }
+  }
+  return (correctAnswers / totalQuestions.value) * 100;
 };
 
 const finishExam = async () => {
@@ -146,13 +161,13 @@ const finishExam = async () => {
 
     localStorage.removeItem("selectedAnswers");
     localStorage.removeItem("remainingTime");
+    localStorage.removeItem("examQuestions");
     clearInterval(timer);
     logInfo("Datos del localStorage eliminados");
 
     router.push({ name: "ExamFinished" });
   } catch (error) {
     logError("Error al guardar los resultados del examen:", error);
-    // Manejo de errores
   }
 };
 
@@ -178,7 +193,7 @@ const handleZoomChange = (newZoom) => {
 
 const handleQuestionSelected = (questionId) => {
   currentQuestion.value =
-    questions.value.find((q) => q.id === questionId) || null;
+      questions.value.find((q) => q.id === questionId) || null;
 };
 
 const startResizing = (e) => {
@@ -204,20 +219,6 @@ const resize = (e) => {
     leftPaneWidth.value = `${newWidth}px`;
   }
 };
-
-watch(
-  () => questions.value,
-  (newQuestions) => {
-    totalQuestions.value = newQuestions.length;
-    const savedAnswers = localStorage.getItem("selectedAnswers");
-    if (savedAnswers) {
-      selectedAnswers.value = JSON.parse(savedAnswers);
-      updateAnsweredQuestions();
-    }
-    logInfo(`Preguntas actualizadas. Total: ${totalQuestions.value}`);
-  },
-  { deep: true }
-);
 </script>
 
 <template>

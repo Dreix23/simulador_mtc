@@ -1,4 +1,4 @@
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { logError, logInfo, logDebug } from '@/utils/logger.js';
 
@@ -14,37 +14,84 @@ export const getQuestionsByCategory = async () => {
         }
 
         const category = userData.categoria;
-        const questionsRef = collection(db, 'questionnaire');
-        const q = query(questionsRef, where('CATEGORIA', '==', category));
+        let cachedQuestions = getCachedQuestions();
 
-        return new Promise((resolve, reject) => {
-            unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const questions = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ALTERNATIVA_1: doc.data().ALTERNATIVA_1,
-                    ALTERNATIVA_2: doc.data().ALTERNATIVA_2,
-                    ALTERNATIVA_3: doc.data().ALTERNATIVA_3,
-                    ALTERNATIVA_4: doc.data().ALTERNATIVA_4,
-                    DESCRIPCIÓN_DE_LA_PREGUNTA: doc.data().DESCRIPCIÓN_DE_LA_PREGUNTA,
-                    IMAGE_URL: doc.data().IMAGE_URL,
-                    RESPUESTA: doc.data().RESPUESTA,
-                    TEMA: doc.data().TEMA
-                }));
+        if (!cachedQuestions) {
+            cachedQuestions = await fetchAllQuestions();
+            cacheQuestions(cachedQuestions);
+            setupRealtimeListener();
+        }
 
-                localStorage.setItem(CACHE_KEY, JSON.stringify(questions));
-                logInfo(`Se actualizaron ${questions.length} preguntas para la categoría ${category}`);
-
-                const selectedQuestions = selectRandomQuestions(questions);
-                resolve(selectedQuestions);
-            }, (error) => {
-                logError('Error al obtener las preguntas:', error);
-                reject(error);
-            });
-        });
+        if (cachedQuestions[category]) {
+            logInfo('Usando preguntas en caché');
+            return selectRandomQuestions(cachedQuestions[category]);
+        } else {
+            logError(`No se encontraron preguntas para la categoría ${category}`);
+            return [];
+        }
     } catch (error) {
-        logError('Error al configurar el listener de preguntas:', error);
+        logError('Error al obtener las preguntas:', error);
         throw error;
     }
+};
+
+const getCachedQuestions = () => {
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    return cachedData ? JSON.parse(cachedData) : null;
+};
+
+const cacheQuestions = (questions) => {
+    const encryptedQuestions = encryptResponses(questions);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(encryptedQuestions));
+};
+
+const encryptResponses = (questions) => {
+    return Object.keys(questions).reduce((acc, category) => {
+        acc[category] = questions[category].map(question => ({
+            ...question,
+            RESPUESTA: btoa(question.RESPUESTA)
+        }));
+        return acc;
+    }, {});
+};
+
+const decryptResponse = (encryptedResponse) => {
+    return atob(encryptedResponse);
+};
+
+const fetchAllQuestions = async () => {
+    const questionsRef = collection(db, 'questionnaire');
+    const querySnapshot = await getDocs(questionsRef);
+
+    const questions = {};
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (!questions[data.CATEGORIA]) {
+            questions[data.CATEGORIA] = [];
+        }
+        questions[data.CATEGORIA].push({
+            id: doc.id,
+            ...data
+        });
+    });
+
+    logInfo(`Se cargaron preguntas para ${Object.keys(questions).length} categorías`);
+    return questions;
+};
+
+const setupRealtimeListener = () => {
+    if (unsubscribe) {
+        unsubscribe();
+    }
+
+    const questionsRef = collection(db, 'questionnaire');
+    unsubscribe = onSnapshot(questionsRef, async () => {
+        logInfo('Cambios detectados en la base de datos, actualizando caché');
+        const updatedQuestions = await fetchAllQuestions();
+        cacheQuestions(updatedQuestions);
+    }, (error) => {
+        logError('Error en el listener de preguntas:', error);
+    });
 };
 
 const selectRandomQuestions = (questions) => {
@@ -69,4 +116,8 @@ export const unsubscribeFromQuestions = () => {
         unsubscribe();
         logInfo('Desuscrito del listener de preguntas');
     }
+};
+
+export const getDecryptedResponse = (question) => {
+    return decryptResponse(question.RESPUESTA);
 };
