@@ -58,28 +58,9 @@ const fetchAllQuestionsFromDB = () => {
     });
 };
 
-const selectRandomQuestions = (questions) => {
-    // Primero, seleccionamos 40 preguntas aleatorias
+const selectRandomQuestions = (questions, count) => {
     const shuffled = questions.sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 40);
-
-    // Luego, agrupamos las preguntas seleccionadas por tema
-    const groupedByTopic = selected.reduce((acc, question) => {
-        if (!acc[question.TEMA]) {
-            acc[question.TEMA] = [];
-        }
-        acc[question.TEMA].push(question);
-        return acc;
-    }, {});
-
-    // Ordenamos los temas alfabéticamente
-    const sortedTopics = Object.keys(groupedByTopic).sort();
-
-    // Creamos el array final de preguntas, agrupadas por tema
-    const finalQuestions = sortedTopics.flatMap(topic => groupedByTopic[topic]);
-
-    logDebug(`Seleccionadas ${finalQuestions.length} preguntas aleatorias de un total de ${questions.length}, agrupadas por ${sortedTopics.length} temas`);
-    return finalQuestions;
+    return shuffled.slice(0, count);
 };
 
 export const getQuestionsByCategory = async () => {
@@ -99,14 +80,32 @@ export const getQuestionsByCategory = async () => {
         const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userData.categoria);
         let finalQuestions;
 
-        if (categoryQuestions.length < 40) {
-            const extraQuestions = cachedQuestions.filter(q => q.CATEGORIA !== userData.categoria);
-            const neededQuestions = 40 - categoryQuestions.length;
-            finalQuestions = selectRandomQuestions([...categoryQuestions, ...extraQuestions.slice(0, neededQuestions)]);
+        if (categoryQuestions.length >= 40) {
+            finalQuestions = selectRandomQuestions(categoryQuestions, 40);
         } else {
-            finalQuestions = selectRandomQuestions(categoryQuestions);
+            finalQuestions = [...categoryQuestions];
+            const remainingCount = 40 - categoryQuestions.length;
+            const otherQuestions = cachedQuestions.filter(q => q.CATEGORIA !== userData.categoria);
+            const additionalQuestions = selectRandomQuestions(otherQuestions, remainingCount);
+            finalQuestions = [...finalQuestions, ...additionalQuestions];
         }
 
+        // Agrupar las preguntas por tema
+        const groupedByTopic = finalQuestions.reduce((acc, question) => {
+            if (!acc[question.TEMA]) {
+                acc[question.TEMA] = [];
+            }
+            acc[question.TEMA].push(question);
+            return acc;
+        }, {});
+
+        // Ordenar los temas alfabéticamente
+        const sortedTopics = Object.keys(groupedByTopic).sort();
+
+        // Crear el array final de preguntas, agrupadas por tema
+        finalQuestions = sortedTopics.flatMap(topic => groupedByTopic[topic]);
+
+        logInfo(`Se seleccionaron ${finalQuestions.length} preguntas para la categoría ${userData.categoria}`);
         localStorage.setItem('questionOrder', JSON.stringify(finalQuestions.map(q => q.id)));
 
         return finalQuestions;

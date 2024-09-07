@@ -38,7 +38,7 @@ const scrollActive = ref(false);
 const userData = ref(null);
 
 const progressPercentage = computed(() => {
-  return (props.answeredQuestions / props.totalQuestions) * 100;
+  return Math.min((props.answeredQuestions / props.totalQuestions) * 100, 100);
 });
 
 const topics = ref([]);
@@ -134,7 +134,7 @@ watch(() => props.selectedAnswers, () => {
     </div>
     <div class="contenedor">
       <nav
-          class="container-question px-3 flex-grow overflow-y-auto"
+          class="container-question px-3 flex-grow overflow-y-auto sidebar-questions"
           :class="{ 'pr-0': scrollActive }"
       >
         <div v-for="topic in topics" :key="topic.id" class="border-b-2">
@@ -165,9 +165,9 @@ watch(() => props.selectedAnswers, () => {
               <div
                   class="circle-alrt rounded-full fixed-size border-2 mr-2 flex items-center justify-center"
                   :class="{
-                    'border-gray-400': getQuestionStatus(question.id) === 'unanswered',
-                    'border-red-400': getQuestionStatus(question.id) === 'answered'
-                  }"
+                  'border-gray-400': getQuestionStatus(question.id) === 'unanswered',
+                  'border-red-400': getQuestionStatus(question.id) === 'answered'
+                }"
               >
                 <span class="text-black">{{ getSelectedAlternative(question.id) }}</span>
               </div>
@@ -184,7 +184,7 @@ watch(() => props.selectedAnswers, () => {
         </div>
         <div class="flex justify-between text-sm">
           <p>
-            Resumen de preguntas ({{ Object.keys(selectedAnswers).length }}/{{ totalQuestions }})
+            Resumen de preguntas ({{ Object.keys(props.selectedAnswers).length }}/{{ props.totalQuestions }})
           </p>
           <p>{{ progressPercentage.toFixed(0) }}%</p>
         </div>
