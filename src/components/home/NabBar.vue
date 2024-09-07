@@ -23,6 +23,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close"]);
+const defaultImagePath = new URL('@/assets/images/perfil.png', import.meta.url).href;
 
 const closeDrawer = () => {
   emit("close");
@@ -68,7 +69,7 @@ onMounted(() => {
         <div
             class="w-[70px] h-[70px] overflow-hidden rounded-full clip-custom"
         >
-          <img :src="userData?.imagenUrl || '/path/to/default/image.png'" alt="Perfil" class="w-full h-full object-cover" />
+          <img :src="userData?.imagenUrl || defaultImagePath" alt="Perfil" class="w-full h-full object-cover" />
         </div>
       </div>
       <div

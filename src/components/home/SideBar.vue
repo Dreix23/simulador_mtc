@@ -31,6 +31,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['questionSelected']);
+const defaultImagePath = new URL('@/assets/images/perfil.png', import.meta.url).href;
+
 
 const isDropdownOpen = ref(false);
 const scrollActive = ref(false);
@@ -123,8 +125,8 @@ watch(() => props.questions, () => {
         Postulante
       </h1>
       <img
-          :src="userData?.imagenUrl || '/path/to/default/image.png'"
-          alt=""
+          :src="userData?.imagenUrl || defaultImagePath"
+          alt="Imagen de perfil"
           class="w-[112px] h-[122px] p-[5px] border rounded-[5px] object-cover"
       />
       <p class="uppercase text-size-16 font-medium">
