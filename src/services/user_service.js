@@ -1,6 +1,6 @@
 import { db, storage } from './firebase.js';
 import { collection, addDoc, query, where, getDocs, deleteDoc, doc, Timestamp, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { logInfo, logError } from '@/utils/logger.js';
 import * as XLSX from 'xlsx';
 
@@ -79,25 +79,21 @@ export const userService = {
 
     async deleteUser(userId) {
         try {
-            // Obtener el documento del usuario
             const userDocRef = doc(db, 'users', userId);
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
                 const userData = userDoc.data();
 
-                // Si el usuario tiene una imagen, eliminarla del storage
                 if (userData.imagenUrl) {
                     const imageRef = ref(storage, userData.imagenUrl);
                     await deleteObject(imageRef);
                     logInfo(`Imagen del usuario con ID: ${userId} eliminada`);
                 }
 
-                // Eliminar el documento del usuario
                 await deleteDoc(userDocRef);
                 logInfo(`Usuario con ID: ${userId} eliminado`);
 
-                // Actualizar el caché local
                 const cachedUsers = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
                 const updatedUsers = cachedUsers.filter(user => user.id !== userId);
                 localStorage.setItem(CACHE_KEY, JSON.stringify(updatedUsers));
@@ -148,27 +144,16 @@ export const userService = {
             const data = await file.arrayBuffer();
             const workbook = XLSX.read(data);
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
             const addedUsers = [];
             for (const row of jsonData) {
-                let fechaNacimiento = row['FECHA NACIMIENTO'];
-                if (fechaNacimiento) {
-                    const date = new Date(fechaNacimiento);
-                    if (!isNaN(date.getTime())) {
-                        fechaNacimiento = date.toISOString().split('T')[0];
-                    } else {
-                        console.warn(`Fecha no válida encontrada: ${fechaNacimiento}`);
-                    }
-                }
-
                 const user = await this.addUser({
-                    tipoDocumento: row['TIPO DOCUMENTO'] || 'DNI',
-                    numeroDocumento: row['NUMERO DOCUMENTO'],
+                    tipoDocumento: row['TIP DOC'] || '',
+                    numeroDocumento: row['NUM DOC'],
                     apellidos: row['APELLIDOS'] || '',
-                    nombre: row['NOMBRE'] || '',
-                    fechaNacimiento: fechaNacimiento || '',
-                    categoria: (row['CATEGORIA'] || 'A-I').replace('-', ''),
+                    nombre: row['NOMBRES'] || '',
+                    categoria: row['CAT EXA'] || '',
                 });
                 addedUsers.push(user);
             }

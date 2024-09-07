@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBYYigOXkIugO250tq-NyHQDCRNjiTFQ-k",
-    authDomain: "simulador-mtc.firebaseapp.com",
-    projectId: "simulador-mtc",
-    storageBucket: "simulador-mtc.appspot.com",
-    messagingSenderId: "1091959346564",
-    appId: "1:1091959346564:web:535b5c951065518e4879d1",
-    measurementId: "G-ZGJP8SQRV6"
+    apiKey: "AIzaSyDBLIWd1zAVcZw02qMn0rCnBIdi4SvvBQ4",
+    authDomain: "simulador-81507.firebaseapp.com",
+    projectId: "simulador-81507",
+    storageBucket: "simulador-81507.appspot.com",
+    messagingSenderId: "745383913078",
+    appId: "1:745383913078:web:05e4413ebce9cb5ea7a157",
+    measurementId: "G-6MEXKWTEKY"
 };
 
 // Initialize Firebase

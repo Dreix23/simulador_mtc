@@ -166,14 +166,27 @@ const saveQuestionnaire = async () => {
     logInfo("Guardando cuestionario...");
     logDebug("Datos del cuestionario a guardar:", questionnaire.value);
 
-    for (const question of questionnaire.value.questions) {
+    const imageUploadPromises = [];
+    const questions = questionnaire.value.questions;
+
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
       if (question.image instanceof File) {
-        const imageUrl = await uploadImage(question.image);
-        question.imageUrl = imageUrl;
+        imageUploadPromises.push(
+            uploadImage(question.image).then(imageUrl => {
+              question.imageUrl = imageUrl;
+            })
+        );
       }
       question.category = reverseCategoryMap(question.category);
-      question.correctOption = ['A', 'B', 'C', 'D'][question.correctOption];
+      if (typeof question.correctOption !== 'number' || question.correctOption < 0 || question.correctOption > 3) {
+        logError(`Opción correcta inválida para la pregunta: ${question.text}`);
+        question.correctOption = 0;
+      }
+      question.tipo_de_materia = selectedTipoMateria.value;
     }
+
+    await Promise.all(imageUploadPromises);
 
     await updateQuestionnaire(questionnaire.value);
     logInfo(`Cuestionario guardado: ${questionnaire.value.title}`);
@@ -197,6 +210,15 @@ const handleCategoryChange = (newCategory) => {
 
 watch(selectedCategory, (newCategory) => {
   updateAllQuestionsCategory(questionnaire.value, newCategory);
+});
+
+// Actualizar tipo_de_materia en todas las preguntas
+watch(selectedTipoMateria, (newTipoMateria) => {
+  if (questionnaire.value && questionnaire.value.questions) {
+    questionnaire.value.questions.forEach(question => {
+      question.tipo_de_materia = newTipoMateria;
+    });
+  }
 });
 </script>
 

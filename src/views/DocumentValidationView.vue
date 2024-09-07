@@ -11,11 +11,11 @@ import { logInfo, logError } from '@/utils/logger.js';
 const router = useRouter();
 const selectedDocumentType = ref("DNI");
 const documentTypes = [
-  "DNI",
-  "CARNET DE EXTRANJERIA",
-  "CARNET DE SOLICITANTE DE REFUGIO",
-  "PERMISO TEMPORAL DE PERMANENCIA",
-  "CEDULA DE IDENTIDAD DIPLOMATICA",
+  {value: "DNI", label: "DNI"},
+  {value: "CE", label: "CARNET DE EXTRANJERIA"},
+  {value: "CSR", label: "CARNET DE SOLICITANTE DE REFUGIO"},
+  {value: "PTP", label: "PERMISO TEMPORAL DE PERMANENCIA"},
+  {value: "CID", label: "CEDULA DE IDENTIDAD DIPLOMATICA"},
 ];
 
 const documentNumber = ref("");
@@ -37,7 +37,7 @@ const handleSubmit = async () => {
       if (userData) {
         localStorage.setItem('userData', JSON.stringify(userData));
         logInfo("Documento válido, redirigiendo al perfil");
-        router.push({ name: "Profile" });
+        router.push({name: "Profile"});
       } else {
         logInfo("Datos de usuario no encontrados");
         alert("No se pudieron obtener los datos del usuario.");
@@ -59,7 +59,7 @@ const toggleMenu = () => {
 };
 
 const selectDocumentType = (type) => {
-  selectedDocumentType.value = type;
+  selectedDocumentType.value = type.value;
   isMenuOpen.value = false;
 };
 
@@ -106,7 +106,7 @@ onUnmounted(() => {
                   class="cursor-pointer py-2.5 w-full text-sm text-black bg-transparent border-b-2 border-gray-200 flex items-center justify-between"
                   @click="toggleMenu"
               >
-                {{ selectedDocumentType }}
+                {{ documentTypes.find(type => type.value === selectedDocumentType).label }}
                 <ChevronDown
                     class="text-gray-500"
                     size="16"
@@ -120,11 +120,11 @@ onUnmounted(() => {
                 <ul>
                   <li
                       v-for="type in documentTypes"
-                      :key="type"
+                      :key="type.value"
                       @click="selectDocumentType(type)"
                       class="py-2 px-4 hover:bg-gray-100 cursor-pointer"
                   >
-                    {{ type }}
+                    {{ type.label }}
                   </li>
                 </ul>
               </div>
@@ -154,7 +154,7 @@ onUnmounted(() => {
               class="flex items-center justify-center gap-1 md:gap-2 w-[122px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               :disabled="isLoading"
           >
-            <Loader2 v-if="isLoading" class="animate-spin" size="16" />
+            <Loader2 v-if="isLoading" class="animate-spin" size="16"/>
             <span v-else class="icon-[mdi--key]"></span>
             {{ isLoading ? 'Validando...' : 'Entrar' }}
           </button>
@@ -162,7 +162,7 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <Footer />
+    <Footer/>
   </div>
 </template>
 

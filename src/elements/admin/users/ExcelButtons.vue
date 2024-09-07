@@ -17,7 +17,7 @@ const fileInput = ref(null);
 
 const downloadExcelTemplate = () => {
   const link = document.createElement('a');
-  link.href = new URL('@/assets/modelo-mtc.xlsx', import.meta.url).href;
+  link.href = new URL('@/assets/plantilla.xlsx', import.meta.url).href;
   link.download = 'Postulantes.xlsx';
   document.body.appendChild(link);
   link.click();

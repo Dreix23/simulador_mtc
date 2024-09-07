@@ -1,7 +1,7 @@
 <script setup>
-import {ref, watch, computed} from "vue";
-import {Loader2, UserPlus, Save} from "lucide-vue-next";
-import {logError, logInfo} from "@/utils/logger.js";
+import { ref, watch, computed } from "vue";
+import { Loader2, UserPlus, Save } from "lucide-vue-next";
+import { logError, logInfo } from "@/utils/logger.js";
 import InputField from "@/elements/admin/users/InputField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ExcelButtons from "@/elements/admin/users/ExcelButtons.vue";
@@ -17,11 +17,11 @@ const props = defineProps({
 const emit = defineEmits(['userAdded', 'userUpdated']);
 
 const documentTypes = [
-  "DNI",
-  "CARNET DE EXTRANJERIA",
-  "CARNET DE SOLICITANTE DE REFUGIO",
-  "PERMISO TEMPORAL DE PERMANENCIA",
-  "CEDULA DE IDENTIDAD DIPLOMATICA",
+  { value: "DNI", label: "DNI" },
+  { value: "CE", label: "CARNET DE EXTRANJERIA" },
+  { value: "CSR", label: "CARNET DE SOLICITANTE DE REFUGIO" },
+  { value: "PTP", label: "PERMISO TEMPORAL DE PERMANENCIA" },
+  { value: "CID", label: "CEDULA DE IDENTIDAD DIPLOMATICA" },
 ];
 
 const newUser = ref({
@@ -44,7 +44,6 @@ const isEditing = ref(false);
 
 const resetForm = () => {
   newUser.value = {
-    id: null,
     tipoDocumento: "DNI",
     numeroDocumento: "",
     apellidos: "",
@@ -140,14 +139,14 @@ const getColorClass = (color) => {
             v-model="newUser.tipoDocumento"
             class="text-sm bg-transparent border-none focus:ring-0 z-10 cursor-pointer"
         >
-          <option v-for="type in documentTypes" :key="type" :value="type">
-            {{ type }}
+          <option v-for="type in documentTypes" :key="type.value" :value="type.value">
+            {{ type.label }}
           </option>
         </select>
         <InputField
             id="numeroDocumento"
             v-model="newUser.numeroDocumento"
-            :placeholder="newUser.tipoDocumento"
+            :placeholder="documentTypes.find(t => t.value === newUser.tipoDocumento)?.label"
             maxlength="20"
             :flex="1"
             type="text"

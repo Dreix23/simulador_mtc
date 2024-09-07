@@ -1,5 +1,5 @@
 import { db, storage } from '@/services/firebase';
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, onSnapshot, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { logInfo, logError, logDebug } from "@/utils/logger.js";
 import * as XLSX from 'xlsx';
@@ -184,5 +184,44 @@ export const deleteQuestion = async (questionId) => {
     } catch (error) {
         logError(`Error al eliminar la pregunta: ${error.message}`);
         throw error;
+    }
+};
+
+export const deleteQuestionnaire = async (tema) => {
+    try {
+        logDebug(`Iniciando eliminación del tema: "${tema}"`);
+        const questionnaireRef = collection(db, 'questionnaire');
+        const snapshot = await getDocs(questionnaireRef);
+        const batch = writeBatch(db);
+        let deletedCount = 0;
+
+        snapshot.docs.forEach((doc) => {
+            const data = doc.data();
+            if (data.TEMA === tema) {
+                batch.delete(doc.ref);
+                deletedCount++;
+            }
+        });
+
+        logDebug(`Se encontraron ${deletedCount} documentos para eliminar`);
+
+        if (deletedCount === 0) {
+            logInfo(`No se encontraron documentos para el tema "${tema}"`);
+            return;
+        }
+
+        await batch.commit();
+        logInfo(`Tema "${tema}" y sus ${deletedCount} cuestionarios eliminados exitosamente`);
+
+        // Actualizar el caché local
+        const cachedData = JSON.parse(localStorage.getItem(CACHE_KEY));
+        if (cachedData) {
+            delete cachedData[tema];
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cachedData));
+            logDebug(`Caché local actualizado para el tema "${tema}"`);
+        }
+    } catch (error) {
+        logError(`Error al eliminar el tema "${tema}":`, error);
+        throw new Error(`No se pudo eliminar el tema "${tema}". Detalles: ${error.message}`);
     }
 };

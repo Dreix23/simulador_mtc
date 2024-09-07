@@ -10,22 +10,21 @@ import ZoomControl from "@/components/home/ZoomControl.vue";
 import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { getQuestionsByCategory, unsubscribeFromQuestions } from '@/services/questions_service.js';
+import { saveExamResults } from '@/services/results_service.js';
 
+const router = useRouter();
 const isResizing = ref(false);
 const leftPaneWidth = ref("320px");
 const maxWidth = ref("80%");
 const showHelpImage = ref(false);
-const router = useRouter();
-
 const questions = ref([]);
 const answeredQuestions = ref(0);
 const totalQuestions = ref(0);
-
 const currentQuestion = ref(null);
-
 const selectedAnswers = ref({});
-const remainingTime = ref(2400); // 40 minutos en segundos
+const remainingTime = ref(2400);
 const showConfirmationDialog = ref(false);
+const zoomLevel = ref(50);
 
 let timer;
 
@@ -54,7 +53,6 @@ onMounted(async () => {
     currentQuestion.value = questions.value[0] || null;
     logInfo(`Se cargaron ${totalQuestions.value} preguntas`);
 
-    // Cargar respuestas y tiempo guardados del localStorage
     const savedAnswers = localStorage.getItem('selectedAnswers');
     if (savedAnswers) {
       selectedAnswers.value = JSON.parse(savedAnswers);
@@ -65,7 +63,7 @@ onMounted(async () => {
     if (savedTime) {
       remainingTime.value = parseInt(savedTime);
     } else {
-      remainingTime.value = 2400; // 40 minutos en segundos
+      remainingTime.value = 2400;
     }
 
     startTimer();
@@ -121,16 +119,30 @@ const openConfirmationDialog = () => {
   showConfirmationDialog.value = true;
 };
 
-const finishExam = () => {
-  logInfo("Examen finalizado");
-  localStorage.removeItem('selectedAnswers');
-  localStorage.removeItem('remainingTime');
-  clearInterval(timer);
-  logInfo("Datos del localStorage eliminados");
-  router.push({ name: "ExamFinished" });
+const calculateScore = () => {
+  const score = (answeredQuestions.value / totalQuestions.value) * 100;
+  return Math.round(score * 100) / 100;
 };
 
-const zoomLevel = ref(50);
+const finishExam = async () => {
+  logInfo("Examen finalizado");
+
+  try {
+    const score = calculateScore();
+    await saveExamResults(score);
+    logInfo("Resultados del examen guardados en Firebase");
+
+    localStorage.removeItem('selectedAnswers');
+    localStorage.removeItem('remainingTime');
+    clearInterval(timer);
+    logInfo("Datos del localStorage eliminados");
+
+    router.push({ name: "ExamFinished" });
+  } catch (error) {
+    logError("Error al guardar los resultados del examen:", error);
+    // Manejo de errores
+  }
+};
 
 const baseFontSize = computed(() => {
   const calculatedSize = (zoomLevel.value / 50) * 16;
@@ -180,7 +192,6 @@ const resize = (e) => {
   }
 };
 
-// Observar cambios en las preguntas y actualizar las respuestas guardadas
 watch(() => questions.value, (newQuestions) => {
   totalQuestions.value = newQuestions.length;
   const savedAnswers = localStorage.getItem('selectedAnswers');

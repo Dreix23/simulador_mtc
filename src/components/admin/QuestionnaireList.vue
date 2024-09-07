@@ -1,13 +1,19 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import { Plus, Edit, Loader2 } from "lucide-vue-next";
-import { logInfo, logError } from "@/utils/logger.js";
-import { getQuestionnaires, uploadExcelToFirestore, initializeRealtimeSync } from '@/services/questionnaire_service';
+import {ref, onMounted, onUnmounted} from "vue";
+import {Plus, Edit, Trash2, Loader2} from "lucide-vue-next";
+import {logInfo, logError} from "@/utils/logger.js";
+import {
+  getQuestionnaires,
+  uploadExcelToFirestore,
+  initializeRealtimeSync,
+  deleteQuestionnaire
+} from '@/services/questionnaire_service';
 
 const groupedQuestionnaires = ref({});
 const emit = defineEmits(["editQuestionnaire"]);
 const loading = ref(false);
 const uploading = ref(false);
+const deleting = ref(false);
 const fileInput = ref(null);
 
 let unsubscribe = null;
@@ -65,6 +71,20 @@ const handleFileUpload = async (event) => {
     }
   }
 };
+
+const confirmDelete = async (tema) => {
+  if (confirm(`¿Estás seguro de que quieres eliminar el tema "${tema}" y todos sus cuestionarios?`)) {
+    deleting.value = true;
+    try {
+      await deleteQuestionnaire(tema);
+      logInfo(`Tema "${tema}" y sus cuestionarios eliminados exitosamente`);
+    } catch (error) {
+      logError(`Error al eliminar el tema "${tema}":`, error);
+    } finally {
+      deleting.value = false;
+    }
+  }
+};
 </script>
 
 <template>
@@ -113,12 +133,22 @@ const handleFileUpload = async (event) => {
             <h3 class="text-lg font-medium text-gray-900 truncate">
               {{ tema }}
             </h3>
-            <button
-                @click="editQuestionnaire(tema)"
-                class="text-indigo-600 hover:text-indigo-800 focus:outline-none"
-            >
-              <Edit class="h-5 w-5"/>
-            </button>
+            <div class="flex items-center">
+              <button
+                  @click="editQuestionnaire(tema)"
+                  class="text-indigo-600 hover:text-indigo-800 focus:outline-none mr-2"
+              >
+                <Edit class="h-5 w-5"/>
+              </button>
+              <button
+                  @click="confirmDelete(tema)"
+                  class="text-red-600 hover:text-red-800 focus:outline-none"
+                  :disabled="deleting"
+              >
+                <Trash2 v-if="!deleting" class="h-5 w-5"/>
+                <Loader2 v-else class="animate-spin h-5 w-5"/>
+              </button>
+            </div>
           </div>
           <p class="text-sm text-gray-500">
             {{ questionnaires.length }} cuestionario(s)
