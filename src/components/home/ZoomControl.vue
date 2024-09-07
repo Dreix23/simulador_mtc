@@ -38,10 +38,10 @@ watch(zoomLevel, (newValue) => {
 </script>
 
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center bg-transparent">
     <span class="mr-2 text-sm font-medium text-gray-600">{{ zoomLevel }}%</span>
     <CircleMinus @click="decreaseZoom" class="mr-2 cursor-pointer text-gray-600 hover:text-gray-800" :size="20"/>
-    <div class="relative w-[150px] h-1 bg-gray-200 rounded-full mr-2">
+    <div class="relative w-[150px] h-1 bg-transparent rounded-full mr-2">
       <div
           class="absolute top-0 left-0 h-full bg-red-500 rounded-full"
           :style="{ width: `${zoomLevel}%` }"
