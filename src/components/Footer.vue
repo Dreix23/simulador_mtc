@@ -7,8 +7,8 @@ import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { FooterService } from '@/services/footer_service';
 
 const currentYear = new Date().getFullYear();
-const ip = shallowRef("No asignada");
-const mac = shallowRef("No asignada");
+const ip = shallowRef("192.168.140.142");
+const mac = shallowRef("6C-4B-90-B9-B7-2B");
 const deviceId = shallowRef("");
 const deviceToken = shallowRef("");
 
@@ -96,12 +96,12 @@ onUnmounted(() => {
       <div class="border-l-2 border-r-2 pr-[15px] pl-[4px]">
         <span class="truncate">.NET 7.0.0.28</span>
       </div>
-      <div
+      <!-- <div
           v-if="isRootRoute"
           class="border-r-2 flex justify-center items-center w-[100px] hover:bg-red-300 hover:text-black"
       >
         <router-link to="/login-admin" class="text-center truncate">Admin</router-link>
-      </div>
+      </div> -->
     </div>
   </footer>
 </template>

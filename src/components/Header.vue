@@ -1,9 +1,13 @@
 <script setup>
+import { useRouter, useRoute } from 'vue-router'
 import { ref } from "vue";
 import { defineProps, defineEmits } from "vue";
 import { Menu } from "lucide-vue-next";
 import Sidebar from "./home/NabBar.vue";
-import { logInfo } from '@/utils/logger.js';
+import { logInfo } from "@/utils/logger.js";
+
+const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   title: {
@@ -25,32 +29,42 @@ const toggleSidebar = () => {
   emit("toggle-sidebar");
   logInfo("Sidebar toggled");
 };
+
+function goToLoginAdmin() {
+  if (route.path === '/') {
+    router.push("/login-admin")
+  } else {
+    console.log("Solo puedes hacer doble clic en la ruta raíz");
+  }
+}
 </script>
 
 <template>
   <header
-      class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between responsive-header"
+    class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between responsive-header"
   >
     <div class="w-[250px] flex items-center">
       <button v-if="showMenuIcon" @click="toggleSidebar" class="mr-4">
-        <Menu class="w-[30px] h-[30px] responsive-icon"/>
+        <Menu class="w-[30px] h-[30px] responsive-icon" />
       </button>
     </div>
     <h2
-        class="text-[22px] tracking-[-0.88px] font-normal whitespace-nowrap overflow-hidden overflow-ellipsis flex-grow text-center responsive-title"
+      class="text-[22px] tracking-[-0.88px] font-normal whitespace-nowrap overflow-hidden overflow-ellipsis flex-grow text-center responsive-title"
     >
       {{ title }}
     </h2>
-    <div class="h-[54px] w-[250px] flex justify-end">
-      <img
+    <div @dblclick="goToLoginAdmin" class="h-[54px] w-[250px] flex justify-end">
+
+        <img
           src="@/assets/images/logo-mtc.png"
           alt="MTC Logo"
           class="w-full right-2 py-1 object-contain responsive-logo"
-      />
+        />
+
     </div>
   </header>
 
-  <Sidebar :isVisible="isSidebarVisible" @close="isSidebarVisible = false"/>
+  <Sidebar :isVisible="isSidebarVisible" @close="isSidebarVisible = false" />
 </template>
 
 <style scoped>
