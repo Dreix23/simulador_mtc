@@ -33,14 +33,12 @@ const props = defineProps({
 const emit = defineEmits(['questionSelected']);
 const defaultImagePath = new URL('@/assets/images/perfil.png', import.meta.url).href;
 
-
 const isDropdownOpen = ref(false);
 const scrollActive = ref(false);
 const userData = ref(null);
 
 const progressPercentage = computed(() => {
-  const answeredCount = Object.keys(props.selectedAnswers).length;
-  return (answeredCount / props.totalQuestions) * 100;
+  return (props.answeredQuestions / props.totalQuestions) * 100;
 });
 
 const topics = ref([]);
@@ -58,7 +56,7 @@ const groupQuestionsByTopic = () => {
     id: index + 1,
     title: topic,
     expanded: index === 0,
-    questions: groupedQuestions[topic],
+    questions: groupedQuestions[topic].sort((a, b) => props.questions.indexOf(a) - props.questions.indexOf(b)),
   }));
 };
 
@@ -70,7 +68,7 @@ const toggleTopic = (id) => {
 
 const checkScroll = () => {
   requestAnimationFrame(() => {
-    const container = document.querySelector(".container-question");
+    const container = document.querySelector(".sidebar-questions");
     if (container) {
       scrollActive.value = container.scrollHeight > container.clientHeight;
     }
@@ -82,10 +80,7 @@ const selectQuestion = (questionId) => {
 };
 
 const getQuestionStatus = (questionId) => {
-  if (props.selectedAnswers[questionId]) {
-    return 'answered';
-  }
-  return 'unanswered';
+  return props.selectedAnswers[questionId] ? 'answered' : 'unanswered';
 };
 
 const getSelectedAlternative = (questionId) => {
@@ -112,6 +107,10 @@ onMounted(() => {
 
 watch(() => props.questions, () => {
   groupQuestionsByTopic();
+}, { deep: true });
+
+watch(() => props.selectedAnswers, () => {
+  topics.value = [...topics.value];
 }, { deep: true });
 </script>
 

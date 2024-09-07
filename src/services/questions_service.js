@@ -1,10 +1,86 @@
-import { collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { logError, logInfo, logDebug } from '@/utils/logger.js';
 
-const CACHE_KEY = 'cachedQuestions';
-
+const CACHE_KEY = 'cachedAllQuestions';
 let unsubscribe = null;
+
+const encryptData = (data) => {
+    const jsonString = JSON.stringify(data);
+    return btoa(unescape(encodeURIComponent(jsonString)));
+};
+
+const decryptData = (encryptedData) => {
+    try {
+        const decodedString = decodeURIComponent(escape(atob(encryptedData)));
+        return JSON.parse(decodedString);
+    } catch (error) {
+        logError('Error al desencriptar los datos de la caché:', error);
+        return null;
+    }
+};
+
+const saveToCache = (questions) => {
+    const encryptedQuestions = encryptData(questions);
+    localStorage.setItem(CACHE_KEY, encryptedQuestions);
+};
+
+const getFromCache = () => {
+    const encryptedQuestions = localStorage.getItem(CACHE_KEY);
+    return encryptedQuestions ? decryptData(encryptedQuestions) : null;
+};
+
+const fetchAllQuestionsFromDB = () => {
+    return new Promise((resolve, reject) => {
+        const questionsRef = collection(db, 'questionnaire');
+
+        unsubscribe = onSnapshot(questionsRef, (querySnapshot) => {
+            const allQuestions = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ALTERNATIVA_1: doc.data().ALTERNATIVA_1,
+                ALTERNATIVA_2: doc.data().ALTERNATIVA_2,
+                ALTERNATIVA_3: doc.data().ALTERNATIVA_3,
+                ALTERNATIVA_4: doc.data().ALTERNATIVA_4,
+                DESCRIPCIÓN_DE_LA_PREGUNTA: doc.data().DESCRIPCIÓN_DE_LA_PREGUNTA,
+                IMAGE_URL: doc.data().IMAGE_URL,
+                RESPUESTA: doc.data().RESPUESTA,
+                TEMA: doc.data().TEMA,
+                CATEGORIA: doc.data().CATEGORIA
+            }));
+
+            saveToCache(allQuestions);
+            logInfo(`Se actualizaron ${allQuestions.length} preguntas en la caché`);
+            resolve(allQuestions);
+        }, (error) => {
+            logError('Error al obtener las preguntas de la BD:', error);
+            reject(error);
+        });
+    });
+};
+
+const selectRandomQuestions = (questions) => {
+    // Primero, seleccionamos 40 preguntas aleatorias
+    const shuffled = questions.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 40);
+
+    // Luego, agrupamos las preguntas seleccionadas por tema
+    const groupedByTopic = selected.reduce((acc, question) => {
+        if (!acc[question.TEMA]) {
+            acc[question.TEMA] = [];
+        }
+        acc[question.TEMA].push(question);
+        return acc;
+    }, {});
+
+    // Ordenamos los temas alfabéticamente
+    const sortedTopics = Object.keys(groupedByTopic).sort();
+
+    // Creamos el array final de preguntas, agrupadas por tema
+    const finalQuestions = sortedTopics.flatMap(topic => groupedByTopic[topic]);
+
+    logDebug(`Seleccionadas ${finalQuestions.length} preguntas aleatorias de un total de ${questions.length}, agrupadas por ${sortedTopics.length} temas`);
+    return finalQuestions;
+};
 
 export const getQuestionsByCategory = async () => {
     try {
@@ -13,92 +89,31 @@ export const getQuestionsByCategory = async () => {
             throw new Error('No se encontró la categoría del usuario en localStorage');
         }
 
-        const category = userData.categoria;
-        let cachedQuestions = getCachedQuestions();
+        let cachedQuestions = getFromCache();
 
         if (!cachedQuestions) {
-            cachedQuestions = await fetchAllQuestions();
-            cacheQuestions(cachedQuestions);
-            setupRealtimeListener();
+            logInfo('No se encontraron preguntas en la caché. Consultando la BD...');
+            cachedQuestions = await fetchAllQuestionsFromDB();
         }
 
-        if (cachedQuestions[category]) {
-            logInfo('Usando preguntas en caché');
-            return selectRandomQuestions(cachedQuestions[category]);
+        const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userData.categoria);
+        let finalQuestions;
+
+        if (categoryQuestions.length < 40) {
+            const extraQuestions = cachedQuestions.filter(q => q.CATEGORIA !== userData.categoria);
+            const neededQuestions = 40 - categoryQuestions.length;
+            finalQuestions = selectRandomQuestions([...categoryQuestions, ...extraQuestions.slice(0, neededQuestions)]);
         } else {
-            logError(`No se encontraron preguntas para la categoría ${category}`);
-            return [];
+            finalQuestions = selectRandomQuestions(categoryQuestions);
         }
+
+        localStorage.setItem('questionOrder', JSON.stringify(finalQuestions.map(q => q.id)));
+
+        return finalQuestions;
     } catch (error) {
-        logError('Error al obtener las preguntas:', error);
+        logError('Error al obtener preguntas por categoría:', error);
         throw error;
     }
-};
-
-const getCachedQuestions = () => {
-    const cachedData = localStorage.getItem(CACHE_KEY);
-    return cachedData ? JSON.parse(cachedData) : null;
-};
-
-const cacheQuestions = (questions) => {
-    const encryptedQuestions = encryptResponses(questions);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(encryptedQuestions));
-};
-
-const encryptResponses = (questions) => {
-    return Object.keys(questions).reduce((acc, category) => {
-        acc[category] = questions[category].map(question => ({
-            ...question,
-            RESPUESTA: btoa(question.RESPUESTA)
-        }));
-        return acc;
-    }, {});
-};
-
-const decryptResponse = (encryptedResponse) => {
-    return atob(encryptedResponse);
-};
-
-const fetchAllQuestions = async () => {
-    const questionsRef = collection(db, 'questionnaire');
-    const querySnapshot = await getDocs(questionsRef);
-
-    const questions = {};
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (!questions[data.CATEGORIA]) {
-            questions[data.CATEGORIA] = [];
-        }
-        questions[data.CATEGORIA].push({
-            id: doc.id,
-            ...data
-        });
-    });
-
-    logInfo(`Se cargaron preguntas para ${Object.keys(questions).length} categorías`);
-    return questions;
-};
-
-const setupRealtimeListener = () => {
-    if (unsubscribe) {
-        unsubscribe();
-    }
-
-    const questionsRef = collection(db, 'questionnaire');
-    unsubscribe = onSnapshot(questionsRef, async () => {
-        logInfo('Cambios detectados en la base de datos, actualizando caché');
-        const updatedQuestions = await fetchAllQuestions();
-        cacheQuestions(updatedQuestions);
-    }, (error) => {
-        logError('Error en el listener de preguntas:', error);
-    });
-};
-
-const selectRandomQuestions = (questions) => {
-    const shuffled = questions.sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 40);
-    logDebug(`Seleccionadas ${selected.length} preguntas aleatorias de un total de ${questions.length}`);
-    return selected;
 };
 
 export const getInitialQuestion = async () => {
@@ -116,8 +131,4 @@ export const unsubscribeFromQuestions = () => {
         unsubscribe();
         logInfo('Desuscrito del listener de preguntas');
     }
-};
-
-export const getDecryptedResponse = (question) => {
-    return decryptResponse(question.RESPUESTA);
 };
