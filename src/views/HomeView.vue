@@ -221,7 +221,7 @@ watch(
     ></div>
 
     <section
-        class="flex-grow bg-transparent shadow-md overflow-auto flex flex-col relative pb-[0px]"
+        class="flex-grow bg-transparent overflow-auto flex flex-col relative pb-[0px] shadow-sm"
     >
       <div class="flex-grow p-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-2">
@@ -414,6 +414,6 @@ watch(
 }
 
 .h-resolution {
-  height: calc(100vh);
+  height: calc(100.1vh);
 }
 </style>
