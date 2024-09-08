@@ -74,22 +74,22 @@ header {
 
 @media screen and (max-width: 1800px) {
   .responsive-header {
-    height: 78px; /* Reducción del 10% de 87px */
-    padding-top: 13.5px; /* Reducción del 10% de 15px */
-    padding-bottom: 13.5px; /* Reducción del 10% de 15px */
+    height: 78px; 
+    padding-top: 13.5px;
+    padding-bottom: 13.5px; 
   }
 
   .responsive-title {
-    font-size: 19.8px; /* Reducción del 10% de 22px */
+    font-size: 19.8px;
   }
 
   .responsive-logo {
-    height: 48.6px; /* Reducción del 10% de 54px */
+    height: 48.6px;
   }
 
   .responsive-icon {
-    width: 27px; /* Reducción del 10% de 30px */
-    height: 27px; /* Reducción del 10% de 30px */
+    width: 27px;
+    height: 27px;
   }
 }
 </style>

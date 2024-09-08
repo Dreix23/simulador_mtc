@@ -93,7 +93,7 @@ onMounted(() => {
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
-  line-height: 121.017%; /* 14.522px */
+  line-height: 121.017%;
   letter-spacing: 0.36px;
   text-transform: uppercase;
 }
