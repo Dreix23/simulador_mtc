@@ -208,28 +208,28 @@ watch(
 
 <template>
   <Header
-    title="Examen de Conocimientos - CATEGORÍA: (A) I"
-    :showMenuIcon="true"
+      title="Examen de Conocimientos - CATEGORÍA: (A) I"
+      :showMenuIcon="true"
   />
 
   <main class="flex-grow flex zoom-80 h-resolution">
     <SideBar
-      :leftPaneWidth="leftPaneWidth"
-      :maxWidth="maxWidth"
-      :answeredQuestions="answeredQuestions"
-      :totalQuestions="totalQuestions"
-      :selectedAnswers="selectedAnswers"
-      :questions="questions"
-      @questionSelected="handleQuestionSelected"
+        :leftPaneWidth="leftPaneWidth"
+        :maxWidth="maxWidth"
+        :answeredQuestions="answeredQuestions"
+        :totalQuestions="totalQuestions"
+        :selectedAnswers="selectedAnswers"
+        :questions="questions"
+        @questionSelected="handleQuestionSelected"
     />
 
     <div
-      class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
-      @mousedown="startResizing"
+        class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
+        @mousedown="startResizing"
     ></div>
 
     <section
-      class="flex-grow bg-transparent shadow-md overflow-auto flex flex-col relative pb-[0px]"
+        class="flex-grow bg-transparent shadow-md overflow-auto flex flex-col relative pb-[0px]"
     >
       <div class="flex-grow p-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-2">
@@ -241,21 +241,22 @@ watch(
           <p>Intentos: 1 de 0</p>
         </div>
 
-        <div class="bg-gray-200 h-2.5 mb-4">
+        <div class="bg-red-500 h-3 mb-4">
           <div
-            class="bg-red-600 h-full"
-            :style="{ width: `${(remainingTime / 2400) * 100}%` }"
+              class="bg-red-700 h-full"
+              :style="{ width: ((2400 - remainingTime) / 2400) * 100 + '%' }"
           ></div>
         </div>
+
         <div
-          v-if="currentQuestion"
-          class="bg-white px-5 rounded shadow-md container-question"
+            v-if="currentQuestion"
+            class="bg-white px-5 rounded shadow-md container-question"
         >
           <div class="w-full h-[53px] flex items-center border-b-2">
             <h3
-              class="font-semibold"
-              :class="{ hidden: isHidden }"
-              :style="{ fontSize: baseFontSize }"
+                class="font-semibold"
+                :class="{ hidden: isHidden }"
+                :style="{ fontSize: baseFontSize }"
             >
               Tema: {{ currentQuestion.TEMA }}
             </h3>
@@ -263,53 +264,46 @@ watch(
 
           <div class="pb-[28px] pt-7" :class="{ hidden: isHidden }">
             <p
-              class="mb-10 text-lg max-w-[1300px]"
-              :style="{ fontSize: baseFontSize }"
+                class="mb-10 text-lg max-w-[1300px]"
+                :style="{ fontSize: baseFontSize }"
             >
               {{ currentQuestion.DESCRIPCIÓN_DE_LA_PREGUNTA }}
             </p>
+
             <div
-              v-if="currentQuestion.IMAGE_URL"
-              class="flex justify-center mb-6"
+                v-if="currentQuestion.IMAGE_URL"
+                class="flex justify-center mb-6"
             >
               <img
-                :src="currentQuestion.IMAGE_URL"
-                alt="Imagen de referencia"
-                class="max-w-full h-auto"
-                :style="{ width: `${(zoomLevel / 60) * 10}%` }"
+                  :src="currentQuestion.IMAGE_URL"
+                  alt="Imagen de referencia"
+                  class="max-w-full h-auto"
+                  :style="{ width: (zoomLevel / 60) * 10 + '%' }"
               />
             </div>
+
             <div class="pl-6 flex flex-col gap-[27px] pb-[42px] border-b-2">
               <div
-                v-for="(alternative, index) in [
+                  v-for="(alternative, index) in [
                   'ALTERNATIVA_1',
                   'ALTERNATIVA_2',
                   'ALTERNATIVA_3',
                   'ALTERNATIVA_4',
                 ]"
-                :key="index"
-                class="mb-4"
+                  :key="index"
+                  class="mb-4"
               >
                 <label
-                  class="flex items-center cursor-pointer"
-                  :style="{ fontSize: baseFontSize }"
+                    class="flex items-center cursor-pointer"
+                    :style="{ fontSize: baseFontSize }"
                 >
                   <input
-                    type="radio"
-                    :name="`question${currentQuestion.id}`"
-                    :value="currentQuestion[alternative]"
-                    :checked="
-                      selectedAnswers[currentQuestion.id] ===
-                      currentQuestion[alternative]
-                    "
-                    @change="
-                      selectAnswer(
-                        currentQuestion.id,
-                        currentQuestion[alternative]
-                      )
-                    "
-                    :style="{ width: radioButtonSize, height: radioButtonSize }"
-                    class="mr-2"
+                      type="radio"
+                      :name="`question${currentQuestion.id}`"
+                      :value="currentQuestion[alternative]"
+                      v-model="selectedAnswers[currentQuestion.id]"
+                      :style="{ width: radioButtonSize, height: radioButtonSize }"
+                      class="mr-2 accent-red-600"
                   />
                   {{ currentQuestion[alternative] }}
                 </label>
@@ -317,29 +311,31 @@ watch(
             </div>
           </div>
         </div>
+
         <div v-else class="text-center py-4">No hay preguntas disponibles.</div>
+
         <div class="flex items-center justify-between mt-4">
           <div class="flex items-center space-x-4">
             <button
-              @click="previousQuestion"
-              class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
-              :disabled="
+                @click="previousQuestion"
+                class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
+                :disabled="
                 !currentQuestion || questions.indexOf(currentQuestion) === 0
               "
             >
               <ChevronLeft />
             </button>
             <span
-              >{{
+            >{{
                 currentQuestion
-                  ? questions.findIndex((q) => q.id === currentQuestion.id) + 1
-                  : 0
+                    ? questions.findIndex((q) => q.id === currentQuestion.id) + 1
+                    : 0
               }}/{{ totalQuestions }}</span
             >
             <button
-              @click="nextQuestion"
-              class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
-              :disabled="
+                @click="nextQuestion"
+                class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
+                :disabled="
                 !currentQuestion ||
                 questions.indexOf(currentQuestion) === questions.length - 1
               "
@@ -347,32 +343,34 @@ watch(
               <ChevronRight />
             </button>
           </div>
+
           <button
-            @click="toggleHelpImage"
-            class="bg-red-600 text-white px-4 py-2 rounded text-sm shadow-shadow-btn hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              @click="toggleHelpImage"
+              class="bg-red-600 text-white px-4 py-2 rounded text-sm shadow-shadow-btn hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             AYUDA PARA EL USO DEL TECLADO
           </button>
         </div>
       </div>
+
       <div
-        class="bg-transparent absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full"
+          class="bg-transparent absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full"
       >
         <button
-          v-if="
+            v-if="
             currentQuestion &&
             currentQuestion.id === questions[totalQuestions - 1]?.id
           "
-          @click="openConfirmationDialog"
-          class="flex items-center justify-center gap-[5px] w-[190px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            @click="openConfirmationDialog"
+            class="flex items-center justify-center gap-[5px] w-[190px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
           <span class="icon-[lucide--door-closed] text-[15px]"></span>
           FINALIZAR EXAMEN
         </button>
         <ZoomControl
-          :initialZoom="zoomLevel"
-          @zoomChange="handleZoomChange"
-          class="absolute right-4 bottom-0"
+            :initialZoom="zoomLevel"
+            @zoomChange="handleZoomChange"
+            class="absolute right-4 bottom-0"
         />
       </div>
     </section>
@@ -381,8 +379,8 @@ watch(
   <Footer />
   <HelpImage :showHelpImage="showHelpImage" @close="toggleHelpImage" />
   <ConfirmationDialog
-    v-model:isVisible="showConfirmationDialog"
-    @confirmed="finishExam"
+      v-model:isVisible="showConfirmationDialog"
+      @confirmed="finishExam"
   />
 </template>
 
@@ -396,7 +394,6 @@ watch(
 }
 
 ::-webkit-scrollbar-track {
-
   background: #f3f3f3;
 }
 
@@ -408,6 +405,7 @@ watch(
 .zoom-80 {
   zoom: 87%;
 }
+
 .h-resolution {
   height: calc(100vh);
 }

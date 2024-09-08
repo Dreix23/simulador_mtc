@@ -126,7 +126,7 @@ export const getInitialQuestion = async () => {
 };
 
 export const unsubscribeFromQuestions = () => {
-    if (unsubscribe) {
+    if (unsubscribe) {d
         unsubscribe();
         logInfo('Desuscrito del listener de preguntas');
     }

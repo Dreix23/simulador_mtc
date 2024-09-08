@@ -38,7 +38,11 @@ const scrollActive = ref(false);
 const userData = ref(null);
 
 const progressPercentage = computed(() => {
-  return Math.min((props.answeredQuestions / props.totalQuestions) * 100, 100);
+  // Asegurarse de que totalQuestions sea mayor que 0 para evitar divisiones por 0
+  if (props.totalQuestions > 0) {
+    return (Object.keys(props.selectedAnswers).length / props.totalQuestions) * 100;
+  }
+  return 0;
 });
 
 const topics = ref([]);
@@ -68,7 +72,7 @@ const toggleTopic = (id) => {
 
 const checkScroll = () => {
   requestAnimationFrame(() => {
-    const container = document.querySelector(".sidebar-questions");
+    const container = document.querySelector(".sidebar-img-questions");
     if (container) {
       scrollActive.value = container.scrollHeight > container.clientHeight;
     }
@@ -176,9 +180,9 @@ watch(() => props.selectedAnswers, () => {
         </div>
       </nav>
       <div class="resumen p-3 border-t-2">
-        <div class="w-full bg-red-700 rounded-full h-4 mb-2">
+        <div class="w-full bg-red-700 h-3 mb-2">
           <div
-              class="bg-red-400 h-4 rounded-full"
+              class="bg-red-400 h-3"
               :style="{ width: `${progressPercentage}%` }"
           ></div>
         </div>
@@ -267,7 +271,7 @@ watch(() => props.selectedAnswers, () => {
 }
 
 .resumen .bg-red-700 {
-  background-color: #f44336;
+  background-color: #f53d30;
 }
 
 .resumen .bg-red-400 {
