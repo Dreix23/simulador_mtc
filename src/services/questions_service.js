@@ -5,29 +5,40 @@ import { logError, logInfo, logDebug } from '@/utils/logger.js';
 const CACHE_KEY = 'cachedAllQuestions';
 let unsubscribe = null;
 
-const encryptData = (data) => {
+const obfuscateData = (data) => {
     const jsonString = JSON.stringify(data);
-    return btoa(unescape(encodeURIComponent(jsonString)));
+    const encodedString = encodeURIComponent(jsonString);
+    return encodedString.split('').reverse().join('');
 };
 
-const decryptData = (encryptedData) => {
+const deobfuscateData = (obfuscatedData) => {
     try {
-        const decodedString = decodeURIComponent(escape(atob(encryptedData)));
+        const reversedString = obfuscatedData.split('').reverse().join('');
+        const decodedString = decodeURIComponent(reversedString);
         return JSON.parse(decodedString);
     } catch (error) {
-        logError('Error al desencriptar los datos de la caché:', error);
+        logError('Error al desobfuscar los datos de la caché:', error);
         return null;
     }
 };
 
 const saveToCache = (questions) => {
-    const encryptedQuestions = encryptData(questions);
-    localStorage.setItem(CACHE_KEY, encryptedQuestions);
+    const obfuscatedQuestions = obfuscateData(questions);
+    localStorage.setItem(CACHE_KEY, obfuscatedQuestions);
 };
 
 const getFromCache = () => {
-    const encryptedQuestions = localStorage.getItem(CACHE_KEY);
-    return encryptedQuestions ? decryptData(encryptedQuestions) : null;
+    const obfuscatedQuestions = localStorage.getItem(CACHE_KEY);
+    return obfuscatedQuestions ? deobfuscateData(obfuscatedQuestions) : null;
+};
+
+const obfuscateAnswer = (answer) => {
+    return encodeURIComponent(answer).split('').reverse().join('');
+};
+
+const deobfuscateAnswer = (obfuscatedAnswer) => {
+    const reversedString = obfuscatedAnswer.split('').reverse().join('');
+    return decodeURIComponent(reversedString);
 };
 
 const fetchAllQuestionsFromDB = () => {
@@ -43,7 +54,7 @@ const fetchAllQuestionsFromDB = () => {
                 ALTERNATIVA_4: doc.data().ALTERNATIVA_4,
                 DESCRIPCIÓN_DE_LA_PREGUNTA: doc.data().DESCRIPCIÓN_DE_LA_PREGUNTA,
                 IMAGE_URL: doc.data().IMAGE_URL,
-                RESPUESTA: doc.data().RESPUESTA,
+                RESPUESTA: obfuscateAnswer(doc.data().RESPUESTA),
                 TEMA: doc.data().TEMA,
                 CATEGORIA: doc.data().CATEGORIA
             }));
@@ -90,7 +101,6 @@ export const getQuestionsByCategory = async () => {
             finalQuestions = [...finalQuestions, ...additionalQuestions];
         }
 
-        // Agrupar las preguntas por tema
         const groupedByTopic = finalQuestions.reduce((acc, question) => {
             if (!acc[question.TEMA]) {
                 acc[question.TEMA] = [];
@@ -99,10 +109,8 @@ export const getQuestionsByCategory = async () => {
             return acc;
         }, {});
 
-        // Ordenar los temas alfabéticamente
         const sortedTopics = Object.keys(groupedByTopic).sort();
 
-        // Crear el array final de preguntas, agrupadas por tema
         finalQuestions = sortedTopics.flatMap(topic => groupedByTopic[topic]);
 
         logInfo(`Se seleccionaron ${finalQuestions.length} preguntas para la categoría ${userData.categoria}`);
@@ -126,8 +134,13 @@ export const getInitialQuestion = async () => {
 };
 
 export const unsubscribeFromQuestions = () => {
-    if (unsubscribe) {d
+    if (unsubscribe) {
         unsubscribe();
         logInfo('Desuscrito del listener de preguntas');
     }
+};
+
+export const checkAnswer = (question, userAnswer) => {
+    const deobfuscatedCorrectAnswer = deobfuscateAnswer(question.RESPUESTA);
+    return userAnswer === deobfuscatedCorrectAnswer;
 };

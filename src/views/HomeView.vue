@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onMounted, watch, onUnmounted } from "vue";
-import { ChevronRight, ChevronLeft } from "lucide-vue-next";
+import { ref, computed, onMounted, watch, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { ChevronRight, ChevronLeft } from "lucide-vue-next";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import HelpImage from "@/components/HelpImage.vue";
@@ -14,6 +14,7 @@ import { saveExamResults } from "@/services/results_service.js";
 import { formatTime, getImageUrl, isImageAlternative, calculateScore, useExamState } from "@/utils/exam_utils.js";
 
 const router = useRouter();
+
 const {
   isResizing,
   leftPaneWidth,
@@ -50,6 +51,11 @@ onMounted(async () => {
     currentQuestion.value = questions.value[0] || null;
     logInfo(`Se cargaron ${totalQuestions.value} preguntas`);
 
+    // Log para verificar que las preguntas tienen la respuesta correcta
+    questions.value.forEach((q, index) => {
+      logDebug(`Pregunta ${index + 1} - Respuesta correcta: ${q.RESPUESTA}`);
+    });
+
     const savedAnswers = localStorage.getItem("selectedAnswers");
     if (savedAnswers) {
       selectedAnswers.value = JSON.parse(savedAnswers);
@@ -59,8 +65,6 @@ onMounted(async () => {
     const savedTime = localStorage.getItem("remainingTime");
     if (savedTime) {
       remainingTime.value = parseInt(savedTime);
-    } else {
-      remainingTime.value = 2400;
     }
 
     startTimer();
@@ -71,7 +75,6 @@ onMounted(async () => {
   window.addEventListener("mousemove", resize);
   window.addEventListener("mouseup", stopResizing);
   maxWidth.value = `${window.innerWidth * 0.8}px`;
-  handleZoomChange(zoomLevel.value);
 });
 
 onUnmounted(() => {
@@ -117,17 +120,26 @@ const openConfirmationDialog = () => {
 };
 
 const finishExam = async () => {
-  logInfo("Examen finalizado");
-
   try {
-    const score = calculateScore(answeredQuestions.value, totalQuestions.value);
+    let correctAnswers = 0;
+    for (let i = 0; i < questions.value.length; i++) {
+      const question = questions.value[i];
+      const questionId = question.id;
+      const isAnswered = selectedAnswers.value.hasOwnProperty(questionId);
+      const selectedAnswer = selectedAnswers.value[questionId] || "No respondida";
+      const correctAnswer = question.RESPUESTA || "No disponible";
+      const isCorrect = selectedAnswer.charAt(0) === correctAnswer;
+
+      if (isCorrect) correctAnswers++;
+    }
+
+    const score = calculateScore(selectedAnswers.value, questions.value);
+
     await saveExamResults(score);
-    logInfo("Resultados del examen guardados en Firebase");
 
     localStorage.removeItem("selectedAnswers");
     localStorage.removeItem("remainingTime");
     clearInterval(timer);
-    logInfo("Datos del localStorage eliminados");
 
     router.push({ name: "ExamFinished" });
   } catch (error) {
@@ -135,31 +147,15 @@ const finishExam = async () => {
   }
 };
 
-const baseFontSize = computed(() => {
-  const calculatedSize = (zoomLevel.value / 50) * 16;
-  return `${Math.min(calculatedSize, 32)}px`;
-});
-
-const radioButtonSize = computed(() => {
-  const calculatedSize = (zoomLevel.value / 50) * 20;
-  return `${Math.min(calculatedSize, 40)}px`;
-});
-
-const isHidden = computed(() => zoomLevel.value === 0);
-
 const handleZoomChange = (newZoom) => {
   zoomLevel.value = newZoom;
-  const container = document.querySelector(".container-question");
-  if (container) {
-    container.style.fontSize = baseFontSize.value;
-  }
 };
 
 const handleQuestionSelected = (questionId) => {
   currentQuestion.value = questions.value.find((q) => q.id === questionId) || null;
 };
 
-const startResizing = (e) => {
+const startResizing = () => {
   isResizing.value = true;
 };
 
@@ -183,19 +179,19 @@ const resize = (e) => {
   }
 };
 
-watch(
-    () => questions.value,
-    (newQuestions) => {
-      totalQuestions.value = newQuestions.length;
-      const savedAnswers = localStorage.getItem("selectedAnswers");
-      if (savedAnswers) {
-        selectedAnswers.value = JSON.parse(savedAnswers);
-        updateAnsweredQuestions();
-      }
-      logInfo(`Preguntas actualizadas. Total: ${totalQuestions.value}`);
-    },
-    { deep: true }
-);
+// Computed properties
+const baseFontSize = computed(() => {
+  const calculatedSize = (zoomLevel.value / 50) * 16;
+  return `${Math.min(calculatedSize, 32)}px`;
+});
+
+const radioButtonSize = computed(() => {
+  const calculatedSize = (zoomLevel.value / 50) * 20;
+  return `${Math.min(calculatedSize, 40)}px`;
+});
+
+const isHidden = computed(() => zoomLevel.value === 0);
+
 </script>
 
 <template>

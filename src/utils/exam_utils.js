@@ -33,8 +33,17 @@ export const isImageAlternative = (alternative) => {
     return typeof alternative === 'string' && alternative.toLowerCase().endsWith('.png');
 };
 
-export const calculateScore = (answeredQuestions, totalQuestions) => {
-    const score = (answeredQuestions / totalQuestions) * 100;
+export const calculateScore = (selectedAnswers, questions) => {
+    let correctAnswers = 0;
+
+    questions.forEach(question => {
+        const selectedAnswer = selectedAnswers[question.id];
+        if (selectedAnswer && selectedAnswer.charAt(0) === question.RESPUESTA) {
+            correctAnswers++;
+        }
+    });
+
+    const score = (correctAnswers / questions.length) * 100;
     return Math.round(score * 100) / 100;
 };
 
