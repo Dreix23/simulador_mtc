@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed } from "vue";
-import { Trash2, Edit2, Search } from "lucide-vue-next";
-import { logInfo, logError } from "@/utils/logger.js";
-import { userService } from "@/services/user_service.js";
-import { getExamResults } from "@/services/results_service.js";
+import {ref, computed, onMounted} from "vue";
+import {Trash2, Edit2, Search} from "lucide-vue-next";
+import {logInfo, logError} from "@/utils/logger.js";
+import {userService} from "@/services/user_service.js";
+import {getExamResults} from "@/services/results_service.js";
 import InfoUsers from "../dialogs/InfoUsers.vue";
+import ConfirmDialog from "../dialogs/ConfirmDialog.vue";
 
 const props = defineProps({
   users: {
@@ -13,10 +14,15 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["userDeleted", "editUser"]);
-const expiredUsers = 10;
+const emit = defineEmits(["userDeleted", "editUser", "usersUpdated"]);
+const expiredUsers = ref(0);
 const infoUsersRef = ref(null);
 const searchQuery = ref("");
+const isLoading = ref(false);
+const showConfirmDialog = ref(false);
+const showConfirmDeleteAllDialog = ref(false);
+const userToDelete = ref(null);
+const isDeleteAllLoading = ref(false);
 
 const deleteUser = async (userId) => {
   try {
@@ -26,6 +32,24 @@ const deleteUser = async (userId) => {
   } catch (error) {
     logError(`Error al eliminar usuario: ${error.message}`);
   }
+};
+
+const confirmDelete = (user) => {
+  userToDelete.value = user;
+  showConfirmDialog.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (userToDelete.value) {
+    await deleteUser(userToDelete.value.id);
+    showConfirmDialog.value = false;
+    userToDelete.value = null;
+  }
+};
+
+const handleCancelDelete = () => {
+  showConfirmDialog.value = false;
+  userToDelete.value = null;
 };
 
 const editUser = (user) => {
@@ -50,6 +74,35 @@ const filteredUsers = computed(() => {
       user.numeroDocumento.includes(query)
   );
 });
+
+const updateExpiredUsersCount = async () => {
+  try {
+    expiredUsers.value = await userService.countUsersToDelete();
+  } catch (error) {
+    logError(`Error al contar usuarios expirados: ${error.message}`);
+  }
+};
+
+const confirmDeleteAllUsers = () => {
+  showConfirmDeleteAllDialog.value = true;
+};
+
+const deleteExpiredUsers = async () => {
+  try {
+    isDeleteAllLoading.value = true;
+    showConfirmDeleteAllDialog.value = false;
+    const deletedCount = await userService.deleteOldUsers();
+    logInfo(`${deletedCount} usuarios antiguos eliminados`);
+    expiredUsers.value = 0;
+    emit("usersUpdated");
+  } catch (error) {
+    logError(`Error al eliminar usuarios antiguos: ${error.message}`);
+  } finally {
+    isDeleteAllLoading.value = false;
+  }
+};
+
+onMounted(updateExpiredUsersCount);
 </script>
 
 <template>
@@ -61,8 +114,7 @@ const filteredUsers = computed(() => {
           <label
               for="default-search"
               class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-          >Search</label
-          >
+          >Search</label>
           <div class="relative">
             <div
                 class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none"
@@ -83,9 +135,11 @@ const filteredUsers = computed(() => {
 
       <div>
         <button
-            class="border-[2px] border-color-red py-[10px] px-[15px] rounded-md text-size-14 hover:bg-color-red hover:text-white transition-colors duration-300 ease-in-out"
+            @click="confirmDeleteAllUsers"
+            :disabled="expiredUsers === 0 || isLoading || isDeleteAllLoading"
+            class="border-[2px] border-color-red py-[10px] px-[15px] rounded-md text-size-14 hover:bg-color-red hover:text-white transition-colors duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Eliminar {{ expiredUsers }} usuarios
+          {{ isDeleteAllLoading ? 'Eliminando...' : `Eliminar ${expiredUsers} usuarios` }}
         </button>
       </div>
     </div>
@@ -94,44 +148,28 @@ const filteredUsers = computed(() => {
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
         <tr>
-          <th
-              class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             #
           </th>
-          <th
-              class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Tipo Doc.
           </th>
-          <th
-              class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Documento
           </th>
-          <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Apellidos
           </th>
-          <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Nombre
           </th>
-          <th
-              class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Categoría
           </th>
-          <th
-              class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Imagen
           </th>
-          <th
-              class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
+          <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
             Acciones
           </th>
         </tr>
@@ -152,14 +190,10 @@ const filteredUsers = computed(() => {
           <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
             {{ user.numeroDocumento }}
           </td>
-          <td
-              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium"
-          >
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
             {{ user.apellidos }}
           </td>
-          <td
-              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium"
-          >
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
             {{ user.nombre }}
           </td>
           <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -174,10 +208,7 @@ const filteredUsers = computed(() => {
             />
             <span v-else>-</span>
           </td>
-          <td
-              class="px-3 py-4 whitespace-nowrap text-sm font-medium"
-              @click.stop
-          >
+          <td class="px-3 py-4 whitespace-nowrap text-sm font-medium" @click.stop>
             <div class="flex justify-center space-x-4">
               <button
                   @click="editUser(user)"
@@ -186,7 +217,7 @@ const filteredUsers = computed(() => {
                 <Edit2 class="h-5 w-5"/>
               </button>
               <button
-                  @click="deleteUser(user.id)"
+                  @click="confirmDelete(user)"
                   class="text-red-600 hover:text-red-900"
               >
                 <Trash2 class="h-5 w-5"/>
@@ -199,6 +230,22 @@ const filteredUsers = computed(() => {
     </div>
   </div>
   <InfoUsers ref="infoUsersRef"/>
+  <ConfirmDialog
+      :is-open="showConfirmDialog"
+      title="Confirmar eliminación"
+      message="¿Estás seguro de que quieres eliminar este usuario?"
+      @confirm="handleConfirmDelete"
+      @cancel="handleCancelDelete"
+  />
+  <ConfirmDialog
+      :is-open="showConfirmDeleteAllDialog"
+      title="Confirmar eliminación masiva"
+      :message="`¿Estás seguro de que quieres eliminar ${expiredUsers} usuarios?`"
+      @confirm="deleteExpiredUsers"
+      @cancel="showConfirmDeleteAllDialog = false"
+  />
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Agregue cualquier estilo específico si es necesario */
+</style>

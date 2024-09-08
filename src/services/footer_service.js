@@ -3,36 +3,27 @@ import { doc, setDoc, updateDoc, onSnapshot, collection, addDoc, getDoc, getDocs
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
 export const FooterService = {
-    // Limpia el localStorage de todos los dispositivos registrados
     clearDeviceCache() {
-        logInfo('Limpiando cache de dispositivos en localStorage...');
         localStorage.removeItem('deviceToken');
         localStorage.removeItem('deviceId');
-        logInfo('Cache de dispositivos eliminada.');
+        localStorage.removeItem('deviceInfo');
     },
 
-    // Obtiene o crea un identificador de dispositivo
     async getOrCreateDeviceIdentifier() {
         try {
             let deviceToken = localStorage.getItem('deviceToken');
             let deviceId = localStorage.getItem('deviceId');
 
-            // Si existe en localStorage, verificamos en Firebase si existe realmente
             if (deviceToken && deviceId) {
                 const deviceRef = doc(db, 'devices', deviceId);
                 const deviceDoc = await getDoc(deviceRef);
 
                 if (deviceDoc.exists()) {
-                    logInfo(`Dispositivo encontrado en Firebase: ${deviceId}`);
-                    // Limpiamos otros dispositivos de localStorage si es necesario
                     this.ensureSingleDeviceInCache(deviceId, deviceToken);
                     return { id: deviceId, token: deviceToken };
-                } else {
-                    logInfo(`Dispositivo no encontrado en Firebase, creando uno nuevo: ${deviceId}`);
                 }
             }
 
-            // Generar nuevos datos si no existen
             deviceToken = this.generateDeviceToken();
             deviceId = this.generateDeviceId();
 
@@ -45,18 +36,9 @@ export const FooterService = {
                     createdAt: new Date().toISOString()
                 });
                 deviceId = newDeviceRef.id;
-                logInfo(`Nuevo dispositivo registrado en Firebase: ${deviceId}`);
-            } else {
-                logInfo(`Modo privado: Nuevo dispositivo no registrado en Firebase: ${deviceId}`);
             }
 
-            // Guardamos los nuevos datos en localStorage
-            localStorage.setItem('deviceToken', deviceToken);
-            localStorage.setItem('deviceId', deviceId);
-            logInfo(`Nuevo token y ID de dispositivo generados: ${deviceToken}, ${deviceId}`);
-
-            // Limpiar cualquier otro dispositivo existente
-            this.ensureSingleDeviceInCache(deviceId, deviceToken);
+            this.updateLocalStorage(deviceId, deviceToken, 'No asignada', 'No asignada');
 
             return { id: deviceId, token: deviceToken };
         } catch (error) {
@@ -65,20 +47,18 @@ export const FooterService = {
         }
     },
 
-    // Asegura que solo un dispositivo exista en localStorage
     ensureSingleDeviceInCache(currentDeviceId, currentDeviceToken) {
         const storedDeviceId = localStorage.getItem('deviceId');
-        const storedDeviceToken = localStorage.getItem('deviceToken');
-
-        // Si los datos en localStorage no coinciden con los actuales, se eliminan
         if (storedDeviceId && storedDeviceId !== currentDeviceId) {
-            logInfo(`Eliminando dispositivo previo de la cache: ${storedDeviceId}`);
-            this.clearDeviceCache();  // Limpiar cache previa
-            // Volver a almacenar solo los datos actuales
-            localStorage.setItem('deviceToken', currentDeviceToken);
-            localStorage.setItem('deviceId', currentDeviceId);
-            logInfo(`Dispositivo actualizado en la cache: ${currentDeviceId}`);
+            this.clearDeviceCache();
+            this.updateLocalStorage(currentDeviceId, currentDeviceToken, 'No asignada', 'No asignada');
         }
+    },
+
+    updateLocalStorage(deviceId, deviceToken, ip, mac) {
+        localStorage.setItem('deviceToken', deviceToken);
+        localStorage.setItem('deviceId', deviceId);
+        localStorage.setItem('deviceInfo', JSON.stringify({ ip, mac, deviceId, deviceToken }));
     },
 
     generateDeviceId() {
@@ -103,7 +83,6 @@ export const FooterService = {
 
     async getAllDevices() {
         if (this.isPrivateMode()) {
-            logDebug('Modo privado: No se pueden obtener todos los dispositivos');
             return [];
         }
 
@@ -114,7 +93,6 @@ export const FooterService = {
             querySnapshot.forEach((doc) => {
                 devices.push({ id: doc.id, ...doc.data() });
             });
-            logInfo(`Se obtuvieron ${devices.length} dispositivos`);
             return devices;
         } catch (error) {
             logError(`Error al obtener todos los dispositivos: ${error.message}`);
@@ -129,7 +107,6 @@ export const FooterService = {
         }
 
         if (this.isPrivateMode()) {
-            logDebug('Modo privado: No se suscribe a cambios en Firebase');
             return () => {};
         }
 
@@ -137,11 +114,10 @@ export const FooterService = {
         return onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
+                this.updateLocalStorage(deviceId, deviceToken, data.ip, data.mac);
                 callback(data);
-                logDebug('Datos del dispositivo actualizados desde Firebase');
             } else {
                 callback(null);
-                logDebug('No se encontraron datos del dispositivo en Firebase');
             }
         }, (error) => {
             logError(`Error en la suscripción del dispositivo: ${error.message}`);
@@ -156,14 +132,14 @@ export const FooterService = {
         };
 
         if (this.isPrivateMode()) {
-            logInfo(`Modo privado: Información del dispositivo actualizada localmente: IP=${ip}, MAC=${mac}`);
+            this.updateLocalStorage(deviceId, deviceToken, ip, mac);
             return true;
         }
 
         try {
             const docRef = doc(db, 'devices', deviceId);
             await updateDoc(docRef, updateData);
-            logInfo(`Información del dispositivo actualizada en Firebase: IP=${ip}, MAC=${mac}`);
+            this.updateLocalStorage(deviceId, deviceToken, ip, mac);
             return true;
         } catch (error) {
             logError(`Error al actualizar la información del dispositivo en Firebase: ${error.message}`);

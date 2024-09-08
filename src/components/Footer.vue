@@ -27,14 +27,11 @@ const loadLocalData = () => {
     mac.value = cachedMac || defaultMac;
     deviceId.value = cachedId || "";
     deviceToken.value = cachedToken || "";
-    logDebug('Datos cargados desde localStorage');
   }
 };
 
 onMounted(async () => {
   isRootRoute.value = route.path === "/";
-  logInfo("Footer component mounted");
-
   loadLocalData();
 
   try {
@@ -42,7 +39,6 @@ onMounted(async () => {
       const { id, token } = await FooterService.getOrCreateDeviceIdentifier();
       deviceId.value = id;
       deviceToken.value = token;
-      logInfo(`Nuevo dispositivo creado: ID=${id}, Token=${token}`);
     }
 
     if (deviceId.value && deviceToken.value) {
@@ -51,15 +47,8 @@ onMounted(async () => {
           deviceToken.value,
           (deviceInfo) => {
             if (deviceInfo) {
-              ip.value = deviceInfo.ip && deviceInfo.ip !== "No asignada" ? deviceInfo.ip : defaultIp;
-              mac.value = deviceInfo.mac && deviceInfo.mac !== "No asignada" ? deviceInfo.mac : defaultMac;
-              logInfo(`Información del dispositivo actualizada: IP=${ip.value}, MAC=${mac.value}`);
-              localStorage.setItem('deviceInfo', JSON.stringify({
-                ip: ip.value,
-                mac: mac.value,
-                deviceId: deviceId.value,
-                deviceToken: deviceToken.value
-              }));
+              ip.value = deviceInfo.ip && deviceInfo.ip !== "No asignada" ? deviceInfo.ip : ip.value;
+              mac.value = deviceInfo.mac && deviceInfo.mac !== "No asignada" ? deviceInfo.mac : mac.value;
             }
           }
       );

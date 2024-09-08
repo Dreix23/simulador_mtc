@@ -11,13 +11,13 @@ let unsubscribes = [];
 
 const updateDeviceInfo = async (device) => {
   try {
-    if (!device.id || !device.token) {
+    if (!device.id || !device.deviceToken) {
       logError('No se ha obtenido un identificador de dispositivo válido');
       return;
     }
 
     isLoading.value = true;
-    const success = await FooterService.updateDeviceInfo(device.id, device.token, device.ip, device.mac);
+    const success = await FooterService.updateDeviceInfo(device.id, device.deviceToken, device.ip, device.mac);
     if (success) {
       logInfo(`Información del dispositivo ${device.id} actualizada correctamente`);
     } else {

@@ -2,12 +2,7 @@
 import {ref, onMounted, onUnmounted} from "vue";
 import {Plus, Edit, Trash2, Loader2} from "lucide-vue-next";
 import {logInfo, logError} from "@/utils/logger.js";
-import {
-  getQuestionnaires,
-  uploadExcelToFirestore,
-  initializeRealtimeSync,
-  deleteQuestionnaire
-} from '@/services/questionnaire_service';
+import {getQuestionnaires, uploadExcelToFirestore, initializeRealtimeSync, deleteQuestionnaire} from '@/services/questionnaire_service';
 
 const groupedQuestionnaires = ref({});
 const emit = defineEmits(["editQuestionnaire"]);

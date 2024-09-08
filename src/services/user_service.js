@@ -165,10 +165,10 @@ export const userService = {
         }
     },
 
-    async deleteOldUsers() {
+    async countUsersToDelete() {
         try {
             const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 0);
 
             const q = query(
                 collection(db, 'users'),
@@ -176,16 +176,65 @@ export const userService = {
             );
 
             const querySnapshot = await getDocs(q);
-            const deletedCount = querySnapshot.size;
+            const count = querySnapshot.size;
 
-            querySnapshot.forEach(async (doc) => {
-                await deleteDoc(doc.ref);
+            logInfo(`Se encontraron ${count} usuarios para eliminar`);
+            return count;
+        } catch (error) {
+            logError('Error al contar usuarios para eliminar:', error);
+            throw error;
+        }
+    },
+
+    async deleteOldUsers() {
+        try {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 0);
+
+            const usersQuery = query(
+                collection(db, 'users'),
+                where('createdAt', '<=', Timestamp.fromDate(oneWeekAgo))
+            );
+
+            const usersSnapshot = await getDocs(usersQuery);
+            let deletedCount = 0;
+
+            for (const userDoc of usersSnapshot.docs) {
+                const userData = userDoc.data();
+
+                // Eliminar resultados de exámenes
+                const examResultsQuery = query(
+                    collection(db, 'examResults'),
+                    where('numeroDocumento', '==', userData.numeroDocumento)
+                );
+                const examResultsSnapshot = await getDocs(examResultsQuery);
+                for (const examResultDoc of examResultsSnapshot.docs) {
+                    await deleteDoc(examResultDoc.ref);
+                }
+
+                // Eliminar imagen del usuario si existe
+                if (userData.imagenUrl) {
+                    const imageRef = ref(storage, userData.imagenUrl);
+                    await deleteObject(imageRef);
+                }
+
+                // Eliminar usuario
+                await deleteDoc(userDoc.ref);
+                deletedCount++;
+            }
+
+            // Actualizar caché local
+            const cachedUsers = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+            const updatedUsers = cachedUsers.filter(user => {
+                const userCreatedAt = user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+                return userCreatedAt > oneWeekAgo;
             });
+            localStorage.setItem(CACHE_KEY, JSON.stringify(updatedUsers));
 
-            logInfo(`${deletedCount} usuarios antiguos eliminados`);
+            logInfo(`${deletedCount} usuarios antiguos y sus exámenes han sido eliminados`);
             return deletedCount;
         } catch (error) {
-            logError(`Error al eliminar usuarios antiguos: ${error.message}`);
+            logError('Error al eliminar usuarios antiguos:', error);
             throw error;
         }
     }
