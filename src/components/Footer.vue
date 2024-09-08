@@ -7,8 +7,10 @@ import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { FooterService } from '@/services/footer_service';
 
 const currentYear = new Date().getFullYear();
-const ip = shallowRef("192.168.140.142");
-const mac = shallowRef("6C-4B-90-B9-B7-2B");
+const defaultIp = "192.168.140.142";
+const defaultMac = "6C-4B-90-B9-B7-2B";
+const ip = shallowRef(defaultIp);
+const mac = shallowRef(defaultMac);
 const deviceId = shallowRef("");
 const deviceToken = shallowRef("");
 
@@ -21,8 +23,8 @@ const loadLocalData = () => {
   const cachedData = localStorage.getItem('deviceInfo');
   if (cachedData) {
     const { ip: cachedIp, mac: cachedMac, deviceId: cachedId, deviceToken: cachedToken } = JSON.parse(cachedData);
-    ip.value = cachedIp || "No asignada";
-    mac.value = cachedMac || "No asignada";
+    ip.value = cachedIp || defaultIp;
+    mac.value = cachedMac || defaultMac;
     deviceId.value = cachedId || "";
     deviceToken.value = cachedToken || "";
     logDebug('Datos cargados desde localStorage');
@@ -43,20 +45,24 @@ onMounted(async () => {
       logInfo(`Nuevo dispositivo creado: ID=${id}, Token=${token}`);
     }
 
-    if (deviceId.value) {
-      unsubscribe = FooterService.subscribeToDeviceInfo(deviceId.value, (deviceInfo) => {
-        if (deviceInfo) {
-          ip.value = deviceInfo.ip || "No asignada";
-          mac.value = deviceInfo.mac || "No asignada";
-          logInfo(`Información del dispositivo actualizada: IP=${ip.value}, MAC=${mac.value}`);
-          localStorage.setItem('deviceInfo', JSON.stringify({
-            ip: ip.value,
-            mac: mac.value,
-            deviceId: deviceId.value,
-            deviceToken: deviceToken.value
-          }));
-        }
-      });
+    if (deviceId.value && deviceToken.value) {
+      unsubscribe = FooterService.subscribeToDeviceInfo(
+          deviceId.value,
+          deviceToken.value,
+          (deviceInfo) => {
+            if (deviceInfo) {
+              ip.value = deviceInfo.ip && deviceInfo.ip !== "No asignada" ? deviceInfo.ip : defaultIp;
+              mac.value = deviceInfo.mac && deviceInfo.mac !== "No asignada" ? deviceInfo.mac : defaultMac;
+              logInfo(`Información del dispositivo actualizada: IP=${ip.value}, MAC=${mac.value}`);
+              localStorage.setItem('deviceInfo', JSON.stringify({
+                ip: ip.value,
+                mac: mac.value,
+                deviceId: deviceId.value,
+                deviceToken: deviceToken.value
+              }));
+            }
+          }
+      );
     }
   } catch (error) {
     logError(`Error al inicializar el componente Footer: ${error.message}`);
@@ -96,12 +102,6 @@ onUnmounted(() => {
       <div class="border-l-2 border-r-2 pr-[15px] pl-[4px]">
         <span class="truncate">.NET 7.0.0.28</span>
       </div>
-      <!-- <div
-          v-if="isRootRoute"
-          class="border-r-2 flex justify-center items-center w-[100px] hover:bg-red-300 hover:text-black"
-      >
-        <router-link to="/login-admin" class="text-center truncate">Admin</router-link>
-      </div> -->
     </div>
   </footer>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, onUnmounted } from "vue";
+import { computed, onMounted, watch, onUnmounted } from "vue";
 import { ChevronRight, ChevronLeft } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import Header from "@/components/Header.vue";
@@ -11,28 +11,25 @@ import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
 import { logInfo, logError, logDebug } from "@/utils/logger.js";
 import { getQuestionsByCategory, unsubscribeFromQuestions } from "@/services/questions_service.js";
 import { saveExamResults } from "@/services/results_service.js";
+import { formatTime, getImageUrl, isImageAlternative, calculateScore, useExamState } from "@/utils/exam_utils.js";
 
 const router = useRouter();
-const isResizing = ref(false);
-const leftPaneWidth = ref("320px");
-const maxWidth = ref("80%");
-const showHelpImage = ref(false);
-const questions = ref([]);
-const answeredQuestions = ref(0);
-const totalQuestions = ref(0);
-const currentQuestion = ref(null);
-const selectedAnswers = ref({});
-const remainingTime = ref(2400);
-const showConfirmationDialog = ref(false);
-const zoomLevel = ref(50);
+const {
+  isResizing,
+  leftPaneWidth,
+  maxWidth,
+  showHelpImage,
+  questions,
+  answeredQuestions,
+  totalQuestions,
+  currentQuestion,
+  selectedAnswers,
+  remainingTime,
+  showConfirmationDialog,
+  zoomLevel
+} = useExamState();
 
 let timer;
-
-const formatTime = (seconds) => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-};
 
 const startTimer = () => {
   timer = setInterval(() => {
@@ -119,16 +116,11 @@ const openConfirmationDialog = () => {
   showConfirmationDialog.value = true;
 };
 
-const calculateScore = () => {
-  const score = (answeredQuestions.value / totalQuestions.value) * 100;
-  return Math.round(score * 100) / 100;
-};
-
 const finishExam = async () => {
   logInfo("Examen finalizado");
 
   try {
-    const score = calculateScore();
+    const score = calculateScore(answeredQuestions.value, totalQuestions.value);
     await saveExamResults(score);
     logInfo("Resultados del examen guardados en Firebase");
 
@@ -285,11 +277,11 @@ watch(
             <div class="pl-6 flex flex-col gap-[27px] pb-[42px] border-b-2">
               <div
                   v-for="(alternative, index) in [
-                  'ALTERNATIVA_1',
-                  'ALTERNATIVA_2',
-                  'ALTERNATIVA_3',
-                  'ALTERNATIVA_4',
-                ]"
+                    'ALTERNATIVA_1',
+                    'ALTERNATIVA_2',
+                    'ALTERNATIVA_3',
+                    'ALTERNATIVA_4',
+                  ]"
                   :key="index"
                   class="mb-4"
               >
@@ -297,15 +289,30 @@ watch(
                     class="flex items-center cursor-pointer"
                     :style="{ fontSize: baseFontSize }"
                 >
-                  <input
-                      type="radio"
-                      :name="`question${currentQuestion.id}`"
-                      :value="currentQuestion[alternative]"
-                      v-model="selectedAnswers[currentQuestion.id]"
-                      :style="{ width: radioButtonSize, height: radioButtonSize }"
-                      class="mr-2 accent-red-600"
+                  <div class="flex items-center">
+                    <input
+                        type="radio"
+                        :name="`question${currentQuestion.id}`"
+                        :value="currentQuestion[alternative]"
+                        v-model="selectedAnswers[currentQuestion.id]"
+                        :style="{ width: radioButtonSize, height: radioButtonSize }"
+                        class="mr-2 accent-red-600"
+                        @change="selectAnswer(currentQuestion.id, currentQuestion[alternative])"
+                    />
+                    <span>
+                      {{ isImageAlternative(currentQuestion[alternative])
+                        ? currentQuestion[alternative].split('.')[0]
+                        : currentQuestion[alternative] }}
+                    </span>
+                  </div>
+                  <img
+                      v-if="isImageAlternative(currentQuestion[alternative])"
+                      :src="getImageUrl(currentQuestion[alternative])"
+                      :alt="`Imagen para ${alternative}`"
+                      class="ml-2 max-w-full h-auto"
+                      :style="{ width: (zoomLevel / 60) * 10 + '%' }"
+                      @error="logError(`Error al cargar la imagen ${currentQuestion[alternative]}:`)"
                   />
-                  {{ currentQuestion[alternative] }}
                 </label>
               </div>
             </div>

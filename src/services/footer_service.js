@@ -1,42 +1,83 @@
 import { db } from './firebase';
-import { doc, setDoc, updateDoc, onSnapshot, collection, addDoc, getDoc, getDocs } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, onSnapshot, collection, addDoc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
 export const FooterService = {
+    // Limpia el localStorage de todos los dispositivos registrados
+    clearDeviceCache() {
+        logInfo('Limpiando cache de dispositivos en localStorage...');
+        localStorage.removeItem('deviceToken');
+        localStorage.removeItem('deviceId');
+        logInfo('Cache de dispositivos eliminada.');
+    },
+
+    // Obtiene o crea un identificador de dispositivo
     async getOrCreateDeviceIdentifier() {
         try {
             let deviceToken = localStorage.getItem('deviceToken');
             let deviceId = localStorage.getItem('deviceId');
 
-            if (!deviceToken || !deviceId) {
-                deviceToken = this.generateDeviceToken();
-                deviceId = this.generateDeviceId();
+            // Si existe en localStorage, verificamos en Firebase si existe realmente
+            if (deviceToken && deviceId) {
+                const deviceRef = doc(db, 'devices', deviceId);
+                const deviceDoc = await getDoc(deviceRef);
 
-                if (!this.isPrivateMode()) {
-                    const devicesCollection = collection(db, 'devices');
-                    const newDeviceRef = await addDoc(devicesCollection, {
-                        deviceToken,
-                        ip: 'No asignada',
-                        mac: 'No asignada',
-                        createdAt: new Date().toISOString()
-                    });
-                    deviceId = newDeviceRef.id;
-                    logInfo(`Nuevo dispositivo registrado en Firebase: ${deviceId}`);
+                if (deviceDoc.exists()) {
+                    logInfo(`Dispositivo encontrado en Firebase: ${deviceId}`);
+                    // Limpiamos otros dispositivos de localStorage si es necesario
+                    this.ensureSingleDeviceInCache(deviceId, deviceToken);
+                    return { id: deviceId, token: deviceToken };
                 } else {
-                    logInfo(`Modo privado: Nuevo dispositivo no registrado en Firebase: ${deviceId}`);
+                    logInfo(`Dispositivo no encontrado en Firebase, creando uno nuevo: ${deviceId}`);
                 }
-
-                localStorage.setItem('deviceToken', deviceToken);
-                localStorage.setItem('deviceId', deviceId);
-                logInfo(`Nuevo token y ID de dispositivo generados: ${deviceToken}, ${deviceId}`);
-            } else {
-                logInfo(`Usando dispositivo existente: ${deviceId}`);
             }
+
+            // Generar nuevos datos si no existen
+            deviceToken = this.generateDeviceToken();
+            deviceId = this.generateDeviceId();
+
+            if (!this.isPrivateMode()) {
+                const devicesCollection = collection(db, 'devices');
+                const newDeviceRef = await addDoc(devicesCollection, {
+                    deviceToken,
+                    ip: 'No asignada',
+                    mac: 'No asignada',
+                    createdAt: new Date().toISOString()
+                });
+                deviceId = newDeviceRef.id;
+                logInfo(`Nuevo dispositivo registrado en Firebase: ${deviceId}`);
+            } else {
+                logInfo(`Modo privado: Nuevo dispositivo no registrado en Firebase: ${deviceId}`);
+            }
+
+            // Guardamos los nuevos datos en localStorage
+            localStorage.setItem('deviceToken', deviceToken);
+            localStorage.setItem('deviceId', deviceId);
+            logInfo(`Nuevo token y ID de dispositivo generados: ${deviceToken}, ${deviceId}`);
+
+            // Limpiar cualquier otro dispositivo existente
+            this.ensureSingleDeviceInCache(deviceId, deviceToken);
 
             return { id: deviceId, token: deviceToken };
         } catch (error) {
             logError(`Error al obtener/crear identificador de dispositivo: ${error.message}`);
             return null;
+        }
+    },
+
+    // Asegura que solo un dispositivo exista en localStorage
+    ensureSingleDeviceInCache(currentDeviceId, currentDeviceToken) {
+        const storedDeviceId = localStorage.getItem('deviceId');
+        const storedDeviceToken = localStorage.getItem('deviceToken');
+
+        // Si los datos en localStorage no coinciden con los actuales, se eliminan
+        if (storedDeviceId && storedDeviceId !== currentDeviceId) {
+            logInfo(`Eliminando dispositivo previo de la cache: ${storedDeviceId}`);
+            this.clearDeviceCache();  // Limpiar cache previa
+            // Volver a almacenar solo los datos actuales
+            localStorage.setItem('deviceToken', currentDeviceToken);
+            localStorage.setItem('deviceId', currentDeviceId);
+            logInfo(`Dispositivo actualizado en la cache: ${currentDeviceId}`);
         }
     },
 

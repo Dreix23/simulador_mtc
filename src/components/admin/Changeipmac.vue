@@ -35,8 +35,8 @@ const loadDevices = async () => {
     const allDevices = await FooterService.getAllDevices();
     devices.value = allDevices.map(device => ({
       ...device,
-      ip: device.ip || '',
-      mac: device.mac || ''
+      ip: device.ip === "No asignada" ? "" : device.ip,
+      mac: device.mac === "No asignada" ? "" : device.mac
     }));
     logInfo(`Se cargaron ${devices.value.length} dispositivos`);
   } catch (error) {
@@ -53,7 +53,12 @@ onMounted(async () => {
         if (deviceInfo) {
           const index = devices.value.findIndex(d => d.id === device.id);
           if (index !== -1) {
-            devices.value[index] = { ...devices.value[index], ...deviceInfo };
+            devices.value[index] = {
+              ...devices.value[index],
+              ...deviceInfo,
+              ip: deviceInfo.ip === "No asignada" ? "" : deviceInfo.ip,
+              mac: deviceInfo.mac === "No asignada" ? "" : deviceInfo.mac
+            };
           }
           logInfo(`Información del dispositivo ${device.id} actualizada`);
         }
@@ -86,7 +91,7 @@ onUnmounted(() => {
                 :id="`ip-${device.id}`"
                 v-model="device.ip"
                 type="text"
-                placeholder="Dirección IP"
+                placeholder="No asignada"
                 class="w-full focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-2 border-gray-300 rounded-md h-[35px] px-3"
             />
           </div>
@@ -98,7 +103,7 @@ onUnmounted(() => {
                 :id="`mac-${device.id}`"
                 v-model="device.mac"
                 type="text"
-                placeholder="Dirección MAC"
+                placeholder="No asignada"
                 class="w-full focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-2 border-gray-300 rounded-md h-[35px] px-3"
             />
           </div>
