@@ -138,10 +138,14 @@ const handleQuestionnaireSave = (savedData) => {
       <div class="mb-4 px-4">
         <button
           @click="handleLogout"
-          class="relative flex items-center p-2.5 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent w-full bg-red-500 text-white hover:bg-red-600"
+          class=" flex items-center gap-[10px] p-2.5 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent w-full bg-red-500 text-white hover:bg-red-600"
         >
-          <LogOut :size="24" class="absolute left-4" />
-          <span class="w-full text-center">Cerrar Sesión</span>
+          <LogOut :size="30"/>
+          <span
+            class="w-full text-left"
+            :class="[isSidebarOpen ? '' : 'hidden']"
+            >Cerrar Sesión</span
+          >
         </button>
       </div>
     </aside>

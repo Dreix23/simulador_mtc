@@ -247,5 +247,4 @@ onMounted(updateExpiredUsersCount);
 </template>
 
 <style scoped>
-/* Agregue cualquier estilo específico si es necesario */
 </style>

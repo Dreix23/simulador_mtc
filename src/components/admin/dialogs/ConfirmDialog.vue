@@ -40,5 +40,4 @@ const cancelDialog = () => {
 </template>
 
 <style scoped>
-/* Puedes agregar estilos personalizados aquí */
 </style>

@@ -24,5 +24,4 @@ const closeModal = () => {
 </template>
 
 <style scoped>
-/* Añadir estilos si es necesario */
 </style>
