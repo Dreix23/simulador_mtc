@@ -295,7 +295,7 @@ const isHidden = computed(() => zoomLevel.value === 0);
                         class="mr-2 accent-red-600"
                         @change="selectAnswer(currentQuestion.id, currentQuestion[alternative])"
                     />
-                    <span>
+                    <span class="max-w-[1300]">
                       {{ isImageAlternative(currentQuestion[alternative])
                         ? currentQuestion[alternative].split('.')[0]
                         : currentQuestion[alternative] }}
