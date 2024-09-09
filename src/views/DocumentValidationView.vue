@@ -89,7 +89,7 @@ onUnmounted(() => {
       :showMenuIcon="false"
     />
     <div class="flex-grow flex flex-col relative">
-
+      <!--  -->
       <div v-if="isDocumentNotFound" class="flex flex-col items-center pt-[15px] w-full absolute">
         <span class="text-size-20 text-color-red-bg mb-[6px]  font-normal leading-normal tracking-[-0.6px]"
           >El postulante no puede dar el examen porque:</span
@@ -101,8 +101,8 @@ onUnmounted(() => {
           <span
             class="icon-[tabler--point-filled] text-size-10 text-color-red-bg"
           ></span>
-          <span class="text-size-11 font-normal leading-normal tracking-[0.11px] text-color-red-bg"
-            >No se encontró el examen activo</span
+          <span class="text-size-11 leading-normal tracking-[0.11px] text-color-red-bg font-semibold"
+            >No se encontro el examen activo</span
           >
         </div>
       </div>
