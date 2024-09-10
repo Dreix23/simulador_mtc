@@ -38,7 +38,6 @@ const scrollActive = ref(false);
 const userData = ref(null);
 
 const progressPercentage = computed(() => {
-  // Asegurarse de que totalQuestions sea mayor que 0 para evitar divisiones por 0
   if (props.totalQuestions > 0) {
     return (Object.keys(props.selectedAnswers).length / props.totalQuestions) * 100;
   }
@@ -48,11 +47,12 @@ const progressPercentage = computed(() => {
 const topics = ref([]);
 
 const groupQuestionsByTopic = () => {
+  let questionCounter = 1;
   const groupedQuestions = props.questions.reduce((acc, question) => {
     if (!acc[question.TEMA]) {
       acc[question.TEMA] = [];
     }
-    acc[question.TEMA].push(question);
+    acc[question.TEMA].push({ ...question, globalIndex: questionCounter++ });
     return acc;
   }, {});
 
@@ -60,7 +60,7 @@ const groupQuestionsByTopic = () => {
     id: index + 1,
     title: topic,
     expanded: index === 0,
-    questions: groupedQuestions[topic].sort((a, b) => props.questions.indexOf(a) - props.questions.indexOf(b)),
+    questions: groupedQuestions[topic],
   }));
 };
 
@@ -155,16 +155,16 @@ watch(() => props.selectedAnswers, () => {
               class="space-y-1 text-sm mt-2 flex flex-col gap-[5px]"
           >
             <li
-                v-for="(question, index) in topic.questions"
+                v-for="question in topic.questions"
                 :key="question.id"
                 @click="selectQuestion(question.id)"
                 class="option flex items-center justify-between h-[60px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
             >
               <label
-                  :for="`question${topic.id}-${index + 1}`"
+                  :for="`question${topic.id}-${question.globalIndex}`"
                   class="pl-[20px] cursor-pointer flex-grow truncate-label"
               >
-                {{ index + 1 }}. {{ question.DESCRIPCIÓN_DE_LA_PREGUNTA }}
+                {{ question.globalIndex }}. {{ question.DESCRIPCIÓN_DE_LA_PREGUNTA }}
               </label>
               <div
                   class="circle-alrt rounded-full fixed-size border-2 mr-2 flex items-center justify-center"
