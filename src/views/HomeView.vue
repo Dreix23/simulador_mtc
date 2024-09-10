@@ -9,9 +9,18 @@ import SideBar from "@/components/home/SideBar.vue";
 import ZoomControl from "@/components/home/ZoomControl.vue";
 import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
 import { logInfo, logError, logDebug } from "@/utils/logger.js";
-import { getQuestionsByCategory, unsubscribeFromQuestions } from "@/services/questions_service.js";
+import {
+  getQuestionsByCategory,
+  unsubscribeFromQuestions,
+} from "@/services/questions_service.js";
 import { saveExamResults } from "@/services/results_service.js";
-import { formatTime, getImageUrl, isImageAlternative, calculateScore, useExamState } from "@/utils/exam_utils.js";
+import {
+  formatTime,
+  getImageUrl,
+  isImageAlternative,
+  calculateScore,
+  useExamState,
+} from "@/utils/exam_utils.js";
 
 const router = useRouter();
 
@@ -27,7 +36,7 @@ const {
   selectedAnswers,
   remainingTime,
   showConfirmationDialog,
-  zoomLevel
+  zoomLevel,
 } = useExamState();
 
 let timer;
@@ -91,13 +100,18 @@ const updateAnsweredQuestions = () => {
 const selectAnswer = (questionId, option) => {
   selectedAnswers.value[questionId] = option;
   updateAnsweredQuestions();
-  localStorage.setItem("selectedAnswers", JSON.stringify(selectedAnswers.value));
+  localStorage.setItem(
+    "selectedAnswers",
+    JSON.stringify(selectedAnswers.value)
+  );
   logDebug(`Respuesta seleccionada para la pregunta ${questionId}: ${option}`);
 };
 
 const previousQuestion = () => {
   if (!currentQuestion.value) return;
-  const currentIndex = questions.value.findIndex((q) => q.id === currentQuestion.value.id);
+  const currentIndex = questions.value.findIndex(
+    (q) => q.id === currentQuestion.value.id
+  );
   if (currentIndex > 0) {
     currentQuestion.value = questions.value[currentIndex - 1];
   }
@@ -105,7 +119,9 @@ const previousQuestion = () => {
 
 const nextQuestion = () => {
   if (!currentQuestion.value) return;
-  const currentIndex = questions.value.findIndex((q) => q.id === currentQuestion.value.id);
+  const currentIndex = questions.value.findIndex(
+    (q) => q.id === currentQuestion.value.id
+  );
   if (currentIndex < questions.value.length - 1) {
     currentQuestion.value = questions.value[currentIndex + 1];
   }
@@ -126,7 +142,8 @@ const finishExam = async () => {
       const question = questions.value[i];
       const questionId = question.id;
       const isAnswered = selectedAnswers.value.hasOwnProperty(questionId);
-      const selectedAnswer = selectedAnswers.value[questionId] || "No respondida";
+      const selectedAnswer =
+        selectedAnswers.value[questionId] || "No respondida";
       const correctAnswer = question.RESPUESTA || "No disponible";
       const isCorrect = selectedAnswer.charAt(0) === correctAnswer;
 
@@ -152,7 +169,8 @@ const handleZoomChange = (newZoom) => {
 };
 
 const handleQuestionSelected = (questionId) => {
-  currentQuestion.value = questions.value.find((q) => q.id === questionId) || null;
+  currentQuestion.value =
+    questions.value.find((q) => q.id === questionId) || null;
 };
 
 const startResizing = () => {
@@ -191,33 +209,32 @@ const radioButtonSize = computed(() => {
 });
 
 const isHidden = computed(() => zoomLevel.value === 0);
-
 </script>
 
 <template>
   <Header
-      title="Examen de Conocimientos - CATEGORÍA: (A) I"
-      :showMenuIcon="true"
+    title="Examen de Conocimientos - CATEGORÍA: (A) I"
+    :showMenuIcon="true"
   />
 
   <main class="flex-grow flex zoom-80 h-resolution">
     <SideBar
-        :leftPaneWidth="leftPaneWidth"
-        :maxWidth="maxWidth"
-        :answeredQuestions="answeredQuestions"
-        :totalQuestions="totalQuestions"
-        :selectedAnswers="selectedAnswers"
-        :questions="questions"
-        @questionSelected="handleQuestionSelected"
+      :leftPaneWidth="leftPaneWidth"
+      :maxWidth="maxWidth"
+      :answeredQuestions="answeredQuestions"
+      :totalQuestions="totalQuestions"
+      :selectedAnswers="selectedAnswers"
+      :questions="questions"
+      @questionSelected="handleQuestionSelected"
     />
 
     <div
-        class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
-        @mousedown="startResizing"
+      class="w-1 cursor-ew-resize bg-gray-300 hover:bg-gray-400 transition-colors duration-300"
+      @mousedown="startResizing"
     ></div>
 
     <section
-        class="flex-grow bg-transparent overflow-auto flex flex-col relative pb-[0px] shadow-sm"
+      class="flex-grow bg-transparent overflow-auto flex flex-col relative pb-[0px] shadow-sm"
     >
       <div class="flex-grow p-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-2">
@@ -231,20 +248,20 @@ const isHidden = computed(() => zoomLevel.value === 0);
 
         <div class="bg-red-500 h-3 mb-4">
           <div
-              class="bg-red-700 h-full"
-              :style="{ width: ((2400 - remainingTime) / 2400) * 100 + '%' }"
+            class="bg-red-700 h-full"
+            :style="{ width: ((2400 - remainingTime) / 2400) * 100 + '%' }"
           ></div>
         </div>
 
         <div
-            v-if="currentQuestion"
-            class="bg-white px-5 rounded shadow-md container-question"
+          v-if="currentQuestion"
+          class="bg-white px-5 rounded shadow-md container-question"
         >
           <div class="w-full h-[53px] flex items-center border-b-2">
             <h3
-                class="font-semibold"
-                :class="{ hidden: isHidden }"
-                :style="{ fontSize: baseFontSize }"
+              class="font-semibold"
+              :class="{ hidden: isHidden }"
+              :style="{ fontSize: baseFontSize }"
             >
               Tema: {{ currentQuestion.TEMA }}
             </h3>
@@ -252,62 +269,79 @@ const isHidden = computed(() => zoomLevel.value === 0);
 
           <div class="pb-[28px] pt-7" :class="{ hidden: isHidden }">
             <p
-                class="mb-10 text-lg max-w-[1300px]"
-                :style="{ fontSize: baseFontSize }"
+              :class="{
+                'mb-0 text-lg max-w-[1300px]': currentQuestion.IMAGE_URL,
+                'mb-10 text-lg max-w-[1300px]': !currentQuestion.IMAGE_URL,
+              }"
+              :style="{ fontSize: baseFontSize }"
             >
               {{ currentQuestion.DESCRIPCIÓN_DE_LA_PREGUNTA }}
             </p>
 
             <div
-                v-if="currentQuestion.IMAGE_URL"
-                class="flex justify-center mb-[120px] mt-[79px]"
+              v-if="currentQuestion.IMAGE_URL"
+              class="flex justify-center w-full h-[300px]"
             >
               <img
-                  :src="currentQuestion.IMAGE_URL"
-                  alt="Imagen de referencia"
-                  class="max-w-full h-auto"
-                  :style="{ width: (zoomLevel / 60) * 10 + '%' }"
+                :src="currentQuestion.IMAGE_URL"
+                alt="Imagen de referencia"
+                class="w-[300px] h-full object-contain"
+                :style="{ width: (zoomLevel / 60) * 10 + '%' }"
               />
             </div>
 
             <div class="pl-6 flex flex-col gap-[27px] pb-[42px] border-b-2">
               <div
-                  v-for="(alternative, index) in [
-                    'ALTERNATIVA_1',
-                    'ALTERNATIVA_2',
-                    'ALTERNATIVA_3',
-                    'ALTERNATIVA_4',
-                  ]"
-                  :key="index"
-                  class="mb-4"
+                v-for="(alternative, index) in [
+                  'ALTERNATIVA_1',
+                  'ALTERNATIVA_2',
+                  'ALTERNATIVA_3',
+                  'ALTERNATIVA_4',
+                ]"
+                :key="index"
+                class="mb-4"
               >
                 <label
-                    class="flex items-center cursor-pointer"
-                    :style="{ fontSize: baseFontSize }"
+                  class="flex items-center cursor-pointer"
+                  :style="{ fontSize: baseFontSize }"
                 >
                   <div class="flex items-center">
                     <input
-                        type="radio"
-                        :name="`question${currentQuestion.id}`"
-                        :value="currentQuestion[alternative]"
-                        v-model="selectedAnswers[currentQuestion.id]"
-                        :style="{ width: radioButtonSize, height: radioButtonSize }"
-                        class="mr-2 accent-red-600"
-                        @change="selectAnswer(currentQuestion.id, currentQuestion[alternative])"
+                      type="radio"
+                      :name="`question${currentQuestion.id}`"
+                      :value="currentQuestion[alternative]"
+                      v-model="selectedAnswers[currentQuestion.id]"
+                      :style="{
+                        width: radioButtonSize,
+                        height: radioButtonSize,
+                      }"
+                      class="mr-2 accent-red-600"
+                      @change="
+                        selectAnswer(
+                          currentQuestion.id,
+                          currentQuestion[alternative]
+                        )
+                      "
                     />
                     <span class="max-w-[1300]">
-                      {{ isImageAlternative(currentQuestion[alternative])
-                        ? currentQuestion[alternative].split('.')[0]
-                        : currentQuestion[alternative] }}
+                      {{
+                        isImageAlternative(currentQuestion[alternative])
+                          ? currentQuestion[alternative].split(".")[0]
+                          : currentQuestion[alternative]
+                      }}
                     </span>
                   </div>
                   <img
-                      v-if="isImageAlternative(currentQuestion[alternative])"
-                      :src="getImageUrl(currentQuestion[alternative])"
-                      :alt="`Imagen para ${alternative}`"
-                      class="ml-2 max-w-full h-auto"
-                      :style="{ width: (zoomLevel / 60) * 10 + '%' }"
-                      @error="logError(`Error al cargar la imagen ${currentQuestion[alternative]}:`)"
+                    v-if="isImageAlternative(currentQuestion[alternative])"
+                    :src="getImageUrl(currentQuestion[alternative])"
+                    :alt="`Imagen para ${alternative}`"
+                    class="ml-2 max-w-full h-auto"
+                    :style="{ width: (zoomLevel / 60) * 10 + '%' }"
+                    @error="
+                      logError(
+                        `Error al cargar la imagen ${currentQuestion[alternative]}:`
+                      )
+                    "
                   />
                 </label>
               </div>
@@ -320,25 +354,25 @@ const isHidden = computed(() => zoomLevel.value === 0);
         <div class="flex items-center justify-between mt-4">
           <div class="flex items-center space-x-4">
             <button
-                @click="previousQuestion"
-                class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
-                :disabled="
+              @click="previousQuestion"
+              class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
+              :disabled="
                 !currentQuestion || questions.indexOf(currentQuestion) === 0
               "
             >
               <ChevronLeft />
             </button>
             <span
-            >{{
+              >{{
                 currentQuestion
-                    ? questions.findIndex((q) => q.id === currentQuestion.id) + 1
-                    : 0
+                  ? questions.findIndex((q) => q.id === currentQuestion.id) + 1
+                  : 0
               }}/{{ totalQuestions }}</span
             >
             <button
-                @click="nextQuestion"
-                class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
-                :disabled="
+              @click="nextQuestion"
+              class="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white"
+              :disabled="
                 !currentQuestion ||
                 questions.indexOf(currentQuestion) === questions.length - 1
               "
@@ -348,8 +382,8 @@ const isHidden = computed(() => zoomLevel.value === 0);
           </div>
 
           <button
-              @click="toggleHelpImage"
-              class="bg-red-600 text-white px-4 py-2 rounded text-sm shadow-shadow-btn hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            @click="toggleHelpImage"
+            class="bg-red-600 text-white px-4 py-2 rounded text-sm shadow-shadow-btn hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             AYUDA PARA EL USO DEL TECLADO
           </button>
@@ -357,23 +391,23 @@ const isHidden = computed(() => zoomLevel.value === 0);
       </div>
 
       <div
-          class="bg-transparent absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full"
+        class="bg-transparent absolute bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center items-center w-full"
       >
         <button
-            v-if="
+          v-if="
             currentQuestion &&
             currentQuestion.id === questions[totalQuestions - 1]?.id
           "
-            @click="openConfirmationDialog"
-            class="flex items-center justify-center gap-[5px] w-[190px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          @click="openConfirmationDialog"
+          class="flex items-center justify-center gap-[5px] w-[190px] shadow-shadow-btn text-[14px] bg-red-700 text-white py-[7px] rounded-[4px] hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
           <span class="icon-[lucide--door-closed] text-[15px]"></span>
           FINALIZAR EXAMEN
         </button>
         <ZoomControl
-            :initialZoom="zoomLevel"
-            @zoomChange="handleZoomChange"
-            class="absolute right-4 bottom-0"
+          :initialZoom="zoomLevel"
+          @zoomChange="handleZoomChange"
+          class="absolute right-4 bottom-0"
         />
       </div>
     </section>
@@ -382,8 +416,8 @@ const isHidden = computed(() => zoomLevel.value === 0);
   <Footer />
   <HelpImage :showHelpImage="showHelpImage" @close="toggleHelpImage" />
   <ConfirmationDialog
-      v-model:isVisible="showConfirmationDialog"
-      @confirmed="finishExam"
+    v-model:isVisible="showConfirmationDialog"
+    @confirmed="finishExam"
   />
 </template>
 
