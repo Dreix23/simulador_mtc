@@ -88,17 +88,27 @@ export const getQuestionsByCategory = async () => {
             cachedQuestions = await fetchAllQuestionsFromDB();
         }
 
-        const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userData.categoria);
-        let finalQuestions;
+        const userCategory = userData.categoria;
+        let finalQuestions = [];
 
-        if (categoryQuestions.length >= 40) {
-            finalQuestions = selectRandomQuestions(categoryQuestions, 40);
+        if (['AIIA', 'AIIB', 'AIIIA', 'AIIIB', 'AIIIC'].includes(userCategory)) {
+            const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userCategory);
+            const aiQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'AI');
+
+            if (categoryQuestions.length >= 20) {
+                finalQuestions = [...selectRandomQuestions(categoryQuestions, 20)];
+            } else {
+                finalQuestions = [...categoryQuestions];
+                const remainingCount = 20 - categoryQuestions.length;
+                const additionalQuestions = selectRandomQuestions(aiQuestions, remainingCount);
+                finalQuestions = [...finalQuestions, ...additionalQuestions];
+            }
+
+            const aiQuestionsToAdd = selectRandomQuestions(aiQuestions, 20);
+            finalQuestions = [...finalQuestions, ...aiQuestionsToAdd];
         } else {
-            finalQuestions = [...categoryQuestions];
-            const remainingCount = 40 - categoryQuestions.length;
-            const otherQuestions = cachedQuestions.filter(q => q.CATEGORIA !== userData.categoria);
-            const additionalQuestions = selectRandomQuestions(otherQuestions, remainingCount);
-            finalQuestions = [...finalQuestions, ...additionalQuestions];
+            const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userCategory);
+            finalQuestions = selectRandomQuestions(categoryQuestions, 40);
         }
 
         const groupedByTopic = finalQuestions.reduce((acc, question) => {
@@ -113,7 +123,7 @@ export const getQuestionsByCategory = async () => {
 
         finalQuestions = sortedTopics.flatMap(topic => groupedByTopic[topic]);
 
-        logInfo(`Se seleccionaron ${finalQuestions.length} preguntas para la categoría ${userData.categoria}`);
+        logInfo(`Se seleccionaron ${finalQuestions.length} preguntas para la categoría ${userCategory}`);
         localStorage.setItem('questionOrder', JSON.stringify(finalQuestions.map(q => q.id)));
 
         return finalQuestions;
