@@ -130,7 +130,7 @@ watch(() => props.selectedAnswers, () => {
       <img
           :src="userData?.imagenUrl || defaultImagePath"
           alt="Imagen de perfil"
-          class="w-[112px] h-[122px] p-[5px] border rounded-[5px] object-cover"
+          class="w-[112px] h-[122px] p-[5px] border rounded-[5px] object-contain"
       />
       <p class="uppercase text-size-16 font-medium">
         {{ userData?.nombre }} {{ userData?.apellidos }}

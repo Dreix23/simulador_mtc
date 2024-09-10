@@ -52,7 +52,7 @@ const startNewExam = () => {
           <img
               :src="userData?.imagenUrl || PerfilImg"
               alt=""
-              class="w-[111px] h-[122px] p-[10px] border-[1px] border-color-gray-line rounded-[5px] object-cover"
+              class="w-[111px] h-[122px] p-[10px] border-[1px] border-color-gray-line rounded-[5px] object-contain"
           />
           <div class="w-full text-center">
             <p class="text-gray-700 font-medium text-size-16 uppercase">

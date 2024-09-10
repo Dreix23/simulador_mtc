@@ -6,7 +6,6 @@ import MacImg from "@/assets/images/mac.svg";
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { FooterService } from '@/services/footer_service';
 
-const currentYear = new Date().getFullYear();
 const defaultIp = "192.168.140.142";
 const defaultMac = "6C-4B-90-B9-B7-2B";
 const ip = shallowRef(defaultIp);
@@ -80,7 +79,7 @@ onUnmounted(() => {
       </div>
       <p class="border-l-2 pl-[4px] text-center capitalize truncate">
         &copy; Desarrollado por la oficina de tecnología de información oGTI -
-        ministerio de transporte y comunicaciones - &copy; {{ currentYear }} (v
+        ministerio de transporte y comunicaciones - &copy; 2022 (v
         1.0.1)
       </p>
     </div>
