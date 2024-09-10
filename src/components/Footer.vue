@@ -84,9 +84,9 @@ onUnmounted(() => {
         1.0.1)
       </p>
     </div>
-    <div class="flex flex-row items-center pr-[60px]">
-      <div class="border-l-2 pl-[4px] mr-[60px]">
-        <Siren class="w-[20px]"/>
+    <div class="flex flex-row items-center  pr-[60px]">
+      <div class="border-l-2 pl-[4px] mr-[60px] flex">
+        <span class="icon-[mdi--led-on] text-size-18"></span>
       </div>
       <div class="border-l-2 border-r-2 pr-[15px] pl-[4px]">
         <span class="truncate">.NET 7.0.0.28</span>

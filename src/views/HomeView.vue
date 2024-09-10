@@ -260,7 +260,7 @@ const isHidden = computed(() => zoomLevel.value === 0);
 
             <div
                 v-if="currentQuestion.IMAGE_URL"
-                class="flex justify-center mb-6"
+                class="flex justify-center mb-6 mt-6"
             >
               <img
                   :src="currentQuestion.IMAGE_URL"

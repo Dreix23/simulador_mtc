@@ -144,7 +144,7 @@ watch(() => props.selectedAnswers, () => {
         <div v-for="topic in topics" :key="topic.id" class="border-b-2">
           <div
               @click="toggleTopic(topic.id)"
-              class="flex items-center justify-between cursor-pointer h-[45px] bg-gray-50 pl-[20px]"
+              class="flex items-center justify-between cursor-pointer h-[60px] bg-gray-50 pl-[20px]"
           >
             <h3 class="font-medium truncate-topic">{{ topic.title }}</h3>
             <ChevronDown v-if="!topic.expanded" />
@@ -152,13 +152,13 @@ watch(() => props.selectedAnswers, () => {
           </div>
           <ul
               v-if="topic.expanded"
-              class="space-y-1 text-sm mt-2 flex flex-col gap-[3px]"
+              class="space-y-1 text-sm mt-2 flex flex-col gap-[5px]"
           >
             <li
                 v-for="(question, index) in topic.questions"
                 :key="question.id"
                 @click="selectQuestion(question.id)"
-                class="option flex items-center justify-between h-[45px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
+                class="option flex items-center justify-between h-[60px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
             >
               <label
                   :for="`question${topic.id}-${index + 1}`"
