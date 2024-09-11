@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
@@ -11,6 +11,19 @@ import PerfilImg from "@/assets/images/perfil.png";
 const router = useRouter();
 const userData = ref(null);
 const isLoading = ref(true);
+
+const formattedCategory = computed(() => {
+  if (userData.value && userData.value.categoria) {
+    const category = userData.value.categoria;
+    if (category.length >= 3) {
+      const letter = category[0];
+      const roman = category.slice(1, -1);
+      const lastLetter = category.slice(-1).toLowerCase();
+      return `(${letter}) ${roman}${lastLetter}`;
+    }
+  }
+  return userData.value ? userData.value.categoria : 'N/A';
+});
 
 onMounted(() => {
   const storedUserData = localStorage.getItem('userData');
@@ -69,7 +82,7 @@ const startNewExam = () => {
 
         <div class="h-[121px] w-full flex flex-col pt-[16px] pb-[23px] justify-between border-b-2">
           <div class="text-gray-700 text-size-14 text-center">
-            <p>Categoría: <span class="font-semibold">{{ userData ? userData.categoria : 'N/A' }}</span></p>
+            <p>Categoría: <span class="font-semibold">{{ formattedCategory }}</span></p>
             <p>Idioma: <span class="font-semibold">Español</span></p>
           </div>
           <p class="text-center text-color-gray font-semibold">

@@ -9,18 +9,9 @@ import SideBar from "@/components/home/SideBar.vue";
 import ZoomControl from "@/components/home/ZoomControl.vue";
 import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
 import { logInfo, logError, logDebug } from "@/utils/logger.js";
-import {
-  getQuestionsByCategory,
-  unsubscribeFromQuestions,
-} from "@/services/questions_service.js";
+import {getQuestionsByCategory, unsubscribeFromQuestions,} from "@/services/questions_service.js";
 import { saveExamResults } from "@/services/results_service.js";
-import {
-  formatTime,
-  getImageUrl,
-  isImageAlternative,
-  calculateScore,
-  useExamState,
-} from "@/utils/exam_utils.js";
+import {formatTime, getImageUrl, isImageAlternative, calculateScore, useExamState,} from "@/utils/exam_utils.js";
 
 const router = useRouter();
 
@@ -52,6 +43,18 @@ const startTimer = () => {
     }
   }, 1000);
 };
+
+const formattedCategory = computed(() => {
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const category = userData.categoria || '';
+  if (category.length >= 3) {
+    const letter = category[0];
+    const roman = category.slice(1, -1);
+    const lastLetter = category.slice(-1).toLowerCase();
+    return `(${letter}) ${roman}${lastLetter}`;
+  }
+  return category;
+});
 
 onMounted(async () => {
   try {
@@ -197,7 +200,7 @@ const resize = (e) => {
   }
 };
 
-// Computed properties
+// Computed propiedades
 const baseFontSize = computed(() => {
   const calculatedSize = (zoomLevel.value / 50) * 16;
   return `${Math.min(calculatedSize, 32)}px`;
@@ -213,8 +216,8 @@ const isHidden = computed(() => zoomLevel.value === 0);
 
 <template>
   <Header
-    title="Examen de Conocimientos - CATEGORÍA: (A) I"
-    :showMenuIcon="true"
+      :title="`Examen de Conocimientos - CATEGORÍA: ${formattedCategory}`"
+      :showMenuIcon="true"
   />
 
   <main class="flex-grow flex zoom-80 h-resolution">

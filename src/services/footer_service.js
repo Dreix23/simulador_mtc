@@ -15,11 +15,16 @@ export const FooterService = {
             let deviceId = localStorage.getItem('deviceId');
 
             if (deviceToken && deviceId) {
+                this.clearDeviceCache();
+            }
+
+            if (deviceId) {
                 const deviceRef = doc(db, 'devices', deviceId);
                 const deviceDoc = await getDoc(deviceRef);
 
                 if (deviceDoc.exists()) {
-                    this.ensureSingleDeviceInCache(deviceId, deviceToken);
+                    deviceToken = deviceDoc.data().deviceToken;
+                    this.updateLocalStorage(deviceId, deviceToken, 'No asignada', 'No asignada');
                     return { id: deviceId, token: deviceToken };
                 }
             }
@@ -44,14 +49,6 @@ export const FooterService = {
         } catch (error) {
             logError(`Error al obtener/crear identificador de dispositivo: ${error.message}`);
             return null;
-        }
-    },
-
-    ensureSingleDeviceInCache(currentDeviceId, currentDeviceToken) {
-        const storedDeviceId = localStorage.getItem('deviceId');
-        if (storedDeviceId && storedDeviceId !== currentDeviceId) {
-            this.clearDeviceCache();
-            this.updateLocalStorage(currentDeviceId, currentDeviceToken, 'No asignada', 'No asignada');
         }
     },
 
@@ -143,6 +140,24 @@ export const FooterService = {
             return true;
         } catch (error) {
             logError(`Error al actualizar la información del dispositivo en Firebase: ${error.message}`);
+            return false;
+        }
+    },
+
+    async deleteDevice(deviceId) {
+        if (this.isPrivateMode()) {
+            this.clearDeviceCache();
+            return true;
+        }
+
+        try {
+            const docRef = doc(db, 'devices', deviceId);
+            await deleteDoc(docRef);
+            this.clearDeviceCache();
+            logInfo(`Dispositivo ${deviceId} eliminado correctamente`);
+            return true;
+        } catch (error) {
+            logError(`Error al eliminar el dispositivo ${deviceId}: ${error.message}`);
             return false;
         }
     },

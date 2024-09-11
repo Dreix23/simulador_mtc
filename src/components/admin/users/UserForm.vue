@@ -163,8 +163,8 @@ const getColorClass = (color) => {
       <InputField
           id="nombre"
           v-model="newUser.nombre"
-          label="Nombre"
-          placeholder="Nombre"
+          label="Nombres"
+          placeholder="Nombres"
           :flex="0.25"
           class="flex-[0.25]"
       />

@@ -126,7 +126,7 @@ onMounted(updateExpiredUsersCount);
                 type="search"
                 id="default-search"
                 class="block w-full p-[10px] ps-10 text-size-14 outline-none min-w-[400px] border-[2px] rounded-md border-color-gray-line focus:border-color-blue-max"
-                placeholder="Buscar usuario por Nombre, apellido o DNI"
+                placeholder="Buscar usuario por Nombres, apellidos o DNI"
                 required
             />
           </div>
@@ -161,7 +161,7 @@ onMounted(updateExpiredUsersCount);
             Apellidos
           </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Nombre
+            Nombres
           </th>
           <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Categoría

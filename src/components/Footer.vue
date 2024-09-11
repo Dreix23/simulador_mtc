@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, shallowRef } from "vue";
 import { useRoute } from "vue-router";
-import { Siren } from "lucide-vue-next";
 import MacImg from "@/assets/images/mac.svg";
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { FooterService } from '@/services/footer_service';
@@ -22,10 +21,25 @@ const loadLocalData = () => {
   const cachedData = localStorage.getItem('deviceInfo');
   if (cachedData) {
     const { ip: cachedIp, mac: cachedMac, deviceId: cachedId, deviceToken: cachedToken } = JSON.parse(cachedData);
-    ip.value = cachedIp || defaultIp;
-    mac.value = cachedMac || defaultMac;
+    ip.value = cachedIp && cachedIp !== "No asignada" ? cachedIp : defaultIp;
+    mac.value = cachedMac && cachedMac !== "No asignada" ? cachedMac : defaultMac;
     deviceId.value = cachedId || "";
     deviceToken.value = cachedToken || "";
+  }
+};
+
+const ensureDeviceInFirebase = async () => {
+  try {
+    const { id, token } = await FooterService.getOrCreateDeviceIdentifier();
+    deviceId.value = id;
+    deviceToken.value = token;
+
+    // Actualizar la información del dispositivo en Firebase
+    await FooterService.updateDeviceInfo(id, token, ip.value, mac.value);
+
+    logInfo(`Dispositivo asegurado en Firebase: ${id}`);
+  } catch (error) {
+    logError(`Error al asegurar el dispositivo en Firebase: ${error.message}`);
   }
 };
 
@@ -34,11 +48,7 @@ onMounted(async () => {
   loadLocalData();
 
   try {
-    if (!deviceId.value || !deviceToken.value) {
-      const { id, token } = await FooterService.getOrCreateDeviceIdentifier();
-      deviceId.value = id;
-      deviceToken.value = token;
-    }
+    await ensureDeviceInFirebase();
 
     if (deviceId.value && deviceToken.value) {
       unsubscribe = FooterService.subscribeToDeviceInfo(
@@ -46,8 +56,8 @@ onMounted(async () => {
           deviceToken.value,
           (deviceInfo) => {
             if (deviceInfo) {
-              ip.value = deviceInfo.ip && deviceInfo.ip !== "No asignada" ? deviceInfo.ip : ip.value;
-              mac.value = deviceInfo.mac && deviceInfo.mac !== "No asignada" ? deviceInfo.mac : mac.value;
+              ip.value = deviceInfo.ip && deviceInfo.ip !== "No asignada" ? deviceInfo.ip : defaultIp;
+              mac.value = deviceInfo.mac && deviceInfo.mac !== "No asignada" ? deviceInfo.mac : defaultMac;
             }
           }
       );

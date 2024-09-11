@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
@@ -10,6 +10,19 @@ import { logInfo, logError } from '@/utils/logger.js';
 const router = useRouter();
 const userData = ref(null);
 const isLoading = ref(true);
+
+const formattedCategory = computed(() => {
+  if (userData.value && userData.value.categoria) {
+    const category = userData.value.categoria;
+    if (category.length >= 3) {
+      const letter = category[0];
+      const roman = category.slice(1, -1);
+      const lastLetter = category.slice(-1).toLowerCase();
+      return `(${letter}) ${roman}${lastLetter}`;
+    }
+  }
+  return userData.value ? userData.value.categoria : '';
+});
 
 onMounted(() => {
   const storedUserData = localStorage.getItem('userData');
@@ -24,7 +37,7 @@ onMounted(() => {
 });
 
 const startExam = () => {
-  router.push({ name: "Home" });
+  router.push({name: "Home"});
 };
 </script>
 
@@ -40,7 +53,7 @@ const startExam = () => {
     >
       <div class="responsive-container">
         <div v-if="isLoading" class="flex items-center justify-center h-full">
-          <Loader2 class="animate-spin" size="48" />
+          <Loader2 class="animate-spin" size="48"/>
         </div>
 
         <div
@@ -75,7 +88,7 @@ const startExam = () => {
 
           <div class="flex flex-col items-center gap-[18px] mt-[14px] mb-[23px]">
             <div class="flex flex-col gap-[12px] text-size-12 items-center">
-              <p>Categoría: <span class="font-semibold">{{ userData.categoria }}</span></p>
+              <p>Categoría: <span class="font-semibold">{{ formattedCategory }}</span></p>
               <p>Idioma: <span class="font-semibold">Español</span></p>
             </div>
             <h4 class="text-color-gray font-normal text-size-20">
@@ -103,7 +116,7 @@ const startExam = () => {
       </div>
     </main>
 
-    <Footer />
+    <Footer/>
   </div>
 </template>
 

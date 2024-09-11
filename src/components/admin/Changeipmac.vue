@@ -3,10 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import MacBlackImg from "@/assets/images/macblack.svg";
 import { FooterService } from '@/services/footer_service';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
-import { Loader2 } from 'lucide-vue-next';
+import { Loader2, Trash2 } from 'lucide-vue-next';
 
 const devices = ref([]);
 const isLoading = ref(false);
+const isLoadingMap = ref({});
+const isDeletingMap = ref({});
 let unsubscribes = [];
 
 const updateDeviceInfo = async (device) => {
@@ -16,7 +18,7 @@ const updateDeviceInfo = async (device) => {
       return;
     }
 
-    isLoading.value = true;
+    isLoadingMap.value[device.id] = true;
     const success = await FooterService.updateDeviceInfo(device.id, device.deviceToken, device.ip, device.mac);
     if (success) {
       logInfo(`Información del dispositivo ${device.id} actualizada correctamente`);
@@ -26,7 +28,7 @@ const updateDeviceInfo = async (device) => {
   } catch (error) {
     logError(`Error al actualizar la información del dispositivo ${device.id}: ${error.message}`);
   } finally {
-    isLoading.value = false;
+    isLoadingMap.value[device.id] = false;
   }
 };
 
@@ -41,6 +43,23 @@ const loadDevices = async () => {
     logInfo(`Se cargaron ${devices.value.length} dispositivos`);
   } catch (error) {
     logError(`Error al cargar los dispositivos: ${error.message}`);
+  }
+};
+
+const deleteDevice = async (device) => {
+  try {
+    isDeletingMap.value[device.id] = true;
+    const success = await FooterService.deleteDevice(device.id);
+    if (success) {
+      devices.value = devices.value.filter(d => d.id !== device.id);
+      logInfo(`Dispositivo ${device.id} eliminado correctamente`);
+    } else {
+      logError(`No se pudo eliminar el dispositivo ${device.id}`);
+    }
+  } catch (error) {
+    logError(`Error al eliminar el dispositivo ${device.id}: ${error.message}`);
+  } finally {
+    isDeletingMap.value[device.id] = false;
   }
 };
 
@@ -80,7 +99,7 @@ onUnmounted(() => {
     <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Cambiar IP y MAC</h2>
     <div class="flex flex-wrap justify-center gap-4">
       <div v-for="device in devices" :key="device.id"
-           class="w-full max-w-[300px] h-[260px] flex justify-center items-start pt-[22px] bg-[url('@/assets/images/desktop.svg')] bg-cover bg-no-repeat"
+           class="w-full max-w-[300px] h-[260px] flex justify-center items-start pt-[22px] bg-[url('@/assets/images/desktop.svg')] bg-cover bg-no-repeat relative"
       >
         <form @submit.prevent="updateDeviceInfo(device)" class="flex flex-col gap-[15px] items-center w-full max-w-[200px]">
           <div class="flex items-center gap-[5px] w-full">
@@ -110,12 +129,20 @@ onUnmounted(() => {
           <button
               type="submit"
               class="h-[35px] flex w-full justify-center items-center rounded-[8px] text-size-12 bg-blue-600 hover:bg-blue-700 text-white"
-              :disabled="isLoading"
+              :disabled="isLoadingMap[device.id] || isDeletingMap[device.id]"
           >
-            <Loader2 v-if="isLoading" class="animate-spin" />
+            <Loader2 v-if="isLoadingMap[device.id]" class="animate-spin" />
             <span v-else>Guardar</span>
           </button>
         </form>
+        <button
+            @click="deleteDevice(device)"
+            class="absolute top-2 right-2 p-2 text-red-600 hover:text-red-800"
+            :disabled="isLoadingMap[device.id] || isDeletingMap[device.id]"
+        >
+          <Loader2 v-if="isDeletingMap[device.id]" class="animate-spin" />
+          <Trash2 v-else class="w-5 h-5" />
+        </button>
       </div>
     </div>
   </div>

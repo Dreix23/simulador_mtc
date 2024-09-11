@@ -99,53 +99,56 @@ const handleQuestionnaireSave = (savedData) => {
               >Usuarios</span
             >
           </a>
-          <a
-            @click="setActiveSection('questionnaires')"
-            :class="[
-              'flex items-center p-4 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent',
-              activeSection === 'questionnaires' ||
-              activeSection === 'editQuestionnaire'
-                ? 'bg-color-purple-1 border-[1px] border-color-purple-2 text-color-blue-max font-semibold'
-                : 'hover:bg-color-purple-1 hover:border-[1px] hover:border-color-purple-2 hover:text-color-blue-max hover:font-semibold',
-              isSidebarOpen ? '' : 'justify-center',
-            ]"
+          <!-- Comentado el ítem de cuestionario
+        <a
+          @click="setActiveSection('questionnaires')"
+          :class="[
+            'flex items-center p-4 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent',
+            activeSection === 'questionnaires' ||
+            activeSection === 'editQuestionnaire'
+              ? 'bg-color-purple-1 border-[1px] border-color-purple-2 text-color-blue-max font-semibold'
+              : 'hover:bg-color-purple-1 hover:border-[1px] hover:border-color-purple-2 hover:text-color-blue-max hover:font-semibold',
+            isSidebarOpen ? '' : 'justify-center',
+          ]"
+        >
+          <FileQuestion :size="24" />
+          <span :class="['ml-4', isSidebarOpen ? '' : 'hidden']"
+            >Cuestionarios</span
           >
-            <FileQuestion :size="24" />
-            <span :class="['ml-4', isSidebarOpen ? '' : 'hidden']"
-              >Cuestionarios</span
-            >
-          </a>
-          <a
-            @click="setActiveSection('changeipmac')"
-            :class="[
-              'flex items-center p-4 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent',
-              activeSection === 'changeipmac' ||
-              activeSection === 'editQuestionnaire'
-                ? 'bg-color-purple-1 border-[1px] border-color-purple-2 text-color-blue-max font-semibold'
-                : 'hover:bg-color-purple-1 hover:border-[1px] hover:border-color-purple-2 hover:text-color-blue-max hover:font-semibold',
-              isSidebarOpen ? '' : 'justify-center',
-            ]"
+        </a>
+        -->
+        <a
+          @click="setActiveSection('changeipmac')"
+          :class="[
+            'flex items-center p-4 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent',
+            activeSection === 'changeipmac' ||
+            activeSection === 'editQuestionnaire'
+              ? 'bg-color-purple-1 border-[1px] border-color-purple-2 text-color-blue-max font-semibold'
+              : 'hover:bg-color-purple-1 hover:border-[1px] hover:border-color-purple-2 hover:text-color-blue-max hover:font-semibold',
+            isSidebarOpen ? '' : 'justify-center',
+          ]"
+        >
+          <span class="icon-[mdi--ip-network-outline] text-[24px]"></span>
+          <span :class="['ml-4', isSidebarOpen ? '' : 'hidden']"
+            >Ip - Mac</span
           >
-            <span class="icon-[mdi--ip-network-outline] text-[24px]"></span>
-            <span :class="['ml-4', isSidebarOpen ? '' : 'hidden']"
-              >Ip - Mac</span
-            >
-          </a>
-        </nav>
-      </div>
+        </a>
+      </nav>
+    </div>
 
-      <!-- Botón de cerrar sesión -->
+    <!-- Botón de cerrar sesión -->
       <div class="mb-4 px-4">
         <button
-          @click="handleLogout"
-          class=" flex items-center gap-[10px] p-2.5 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent w-full bg-red-500 text-white hover:bg-red-600"
+            @click="handleLogout"
+            class="relative flex items-center p-2.5 font-medium cursor-pointer rounded-[8px] border-[1px] border-transparent w-full bg-red-500 text-white hover:bg-red-600"
         >
-          <LogOut :size="30"/>
+          <LogOut :size="30" class="z-10"/>
           <span
-            class="w-full text-left"
-            :class="[isSidebarOpen ? '' : 'hidden']"
-            >Cerrar Sesión</span
+              class="absolute inset-0 flex items-center justify-center w-full"
+              :class="[isSidebarOpen ? '' : 'hidden']"
           >
+            Cerrar Sesión
+          </span>
         </button>
       </div>
     </aside>
