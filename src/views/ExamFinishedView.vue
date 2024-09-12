@@ -3,10 +3,10 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
-import { Loader2 } from "lucide-vue-next";
 import { logInfo, logError } from '@/utils/logger.js';
 import btnFin from "@/assets/images/btn-fin.svg"
 import PerfilImg from "@/assets/images/perfil.png";
+import { formatCategory } from '@/utils/category_formatter';
 
 const router = useRouter();
 const userData = ref(null);
@@ -14,15 +14,9 @@ const isLoading = ref(true);
 
 const formattedCategory = computed(() => {
   if (userData.value && userData.value.categoria) {
-    const category = userData.value.categoria;
-    if (category.length >= 3) {
-      const letter = category[0];
-      const roman = category.slice(1, -1);
-      const lastLetter = category.slice(-1).toLowerCase();
-      return `(${letter}) ${roman}${lastLetter}`;
-    }
+    return formatCategory(userData.value.categoria);
   }
-  return userData.value ? userData.value.categoria : 'N/A';
+  return 'N/A';
 });
 
 onMounted(() => {

@@ -12,6 +12,7 @@ import {logInfo, logError, logDebug} from "@/utils/logger.js";
 import {getQuestionsByCategory, unsubscribeFromQuestions,} from "@/services/questions_service.js";
 import {saveExamResults} from "@/services/results_service.js";
 import {formatTime, getImageUrl, isImageAlternative, calculateScore, useExamState,} from "@/utils/exam_utils.js";
+import { formatCategory } from '@/utils/category_formatter';
 
 const router = useRouter();
 
@@ -47,13 +48,7 @@ const startTimer = () => {
 const formattedCategory = computed(() => {
   const userData = JSON.parse(localStorage.getItem('userData') || '{}');
   const category = userData.categoria || '';
-  if (category.length >= 3) {
-    const letter = category[0];
-    const roman = category.slice(1, -1);
-    const lastLetter = category.slice(-1).toLowerCase();
-    return `(${letter}) ${roman}${lastLetter}`;
-  }
-  return category;
+  return formatCategory(category);
 });
 
 onMounted(async () => {
