@@ -68,7 +68,7 @@ function handleAdminClick() {
         />
         <div
             @click="handleAdminClick"
-            class="absolute inset-0 cursor-default"
+            class="absolute inset-y-0 left-1/4 w-1/5"
         ></div>
       </div>
     </div>
