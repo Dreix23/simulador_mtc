@@ -109,6 +109,14 @@ export const getQuestionsByCategory = async () => {
         } else if (userCategory === 'BIIB' || userCategory === 'BIIA') {
             const biiaQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIA');
             finalQuestions = selectRandomQuestions(biiaQuestions, 40);
+        } else if (userCategory === 'BIIC') {
+            const biicQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIC');
+            const biiaQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIA');
+
+            const selectedBiicQuestions = selectRandomQuestions(biicQuestions, 20);
+            const selectedBiiaQuestions = selectRandomQuestions(biiaQuestions, 20);
+
+            finalQuestions = [...selectedBiicQuestions, ...selectedBiiaQuestions];
         } else {
             const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userCategory);
             finalQuestions = selectRandomQuestions(categoryQuestions, 40);
