@@ -55,12 +55,20 @@ onMounted(async () => {
   try {
     questions.value = await getQuestionsByCategory();
     totalQuestions.value = questions.value.length;
-    currentQuestion.value = questions.value[0] || null;
-    logInfo(`Se cargaron ${totalQuestions.value} preguntas`);
 
-    // Log para verificar que las preguntas tienen la respuesta correcta
+    // Numerar las preguntas
+    questions.value = questions.value.map((question, index) => ({
+      ...question,
+      DESCRIPCIÓN_DE_LA_PREGUNTA: `${index + 1}. ${question.DESCRIPCIÓN_DE_LA_PREGUNTA}`
+    }));
+
+    currentQuestion.value = questions.value[0] || null;
+    logInfo(`Se cargaron ${totalQuestions.value} preguntas numeradas`);
+
+    // Log para verificar que las preguntas tienen la respuesta correcta y están numeradas
     questions.value.forEach((q, index) => {
       logDebug(`Pregunta ${index + 1} - Respuesta correcta: ${q.RESPUESTA}`);
+      logDebug(`Descripción numerada: ${q.DESCRIPCIÓN_DE_LA_PREGUNTA}`);
     });
 
     const savedAnswers = localStorage.getItem("selectedAnswers");
@@ -267,11 +275,11 @@ const isHidden = computed(() => zoomLevel.value === 0);
 
           <div class="pb-[28px] pt-7" :class="{ hidden: isHidden }">
             <p
-                :class="{
-                'mb-0 text-lg max-w-[1300px] leading-[1.75]': currentQuestion.IMAGE_URL,
-                'mb-10 text-lg max-w-[1300px] leading-[1.75]': !currentQuestion.IMAGE_URL,
+              :class="{
+                'mb-0 text-lg max-w-[1300px] leading-[1.75] font-semibold': currentQuestion.IMAGE_URL,
+                'mb-10 text-lg max-w-[1300px] leading-[1.75] font-semibold': !currentQuestion.IMAGE_URL,
               }"
-                :style="{ fontSize: baseFontSize }"
+              :style="{ fontSize: baseFontSize }"
             >
               {{ currentQuestion.DESCRIPCIÓN_DE_LA_PREGUNTA }}
             </p>
@@ -291,11 +299,11 @@ const isHidden = computed(() => zoomLevel.value === 0);
             <div class="pl-6 flex flex-col gap-[27px] pb-[42px] border-b-2">
               <div
                   v-for="(alternative, index) in [
-      'ALTERNATIVA_1',
-      'ALTERNATIVA_2',
-      'ALTERNATIVA_3',
-      'ALTERNATIVA_4',
-    ]"
+                    'ALTERNATIVA_1',
+                    'ALTERNATIVA_2',
+                    'ALTERNATIVA_3',
+                    'ALTERNATIVA_4',
+                  ]"
                   :key="index"
                   class="mb-4"
               >

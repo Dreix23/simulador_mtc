@@ -12,14 +12,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  answeredQuestions: {
-    type: Number,
-    required: true,
-  },
-  totalQuestions: {
-    type: Number,
-    required: true,
-  },
   selectedAnswers: {
     type: Object,
     required: true,
@@ -33,26 +25,23 @@ const props = defineProps({
 const emit = defineEmits(['questionSelected']);
 const defaultImagePath = new URL('@/assets/images/perfil.png', import.meta.url).href;
 
-const isDropdownOpen = ref(false);
 const scrollActive = ref(false);
 const userData = ref(null);
-
-const progressPercentage = computed(() => {
-  if (props.totalQuestions > 0) {
-    return (Object.keys(props.selectedAnswers).length / props.totalQuestions) * 100;
-  }
-  return 0;
-});
-
 const topics = ref([]);
 
+const answeredQuestionsCount = computed(() => Object.keys(props.selectedAnswers).length);
+
+const progressPercentage = computed(() => {
+  const totalQuestions = props.questions.length;
+  return totalQuestions > 0 ? (answeredQuestionsCount.value / totalQuestions) * 100 : 0;
+});
+
 const groupQuestionsByTopic = () => {
-  let questionCounter = 1;
   const groupedQuestions = props.questions.reduce((acc, question) => {
     if (!acc[question.TEMA]) {
       acc[question.TEMA] = [];
     }
-    acc[question.TEMA].push({ ...question, globalIndex: questionCounter++ });
+    acc[question.TEMA].push(question);
     return acc;
   }, {});
 
@@ -66,8 +55,10 @@ const groupQuestionsByTopic = () => {
 
 const toggleTopic = (id) => {
   const topic = topics.value.find((t) => t.id === id);
-  topic.expanded = !topic.expanded;
-  checkScroll();
+  if (topic) {
+    topic.expanded = !topic.expanded;
+    checkScroll();
+  }
 };
 
 const checkScroll = () => {
@@ -90,9 +81,11 @@ const getQuestionStatus = (questionId) => {
 const getSelectedAlternative = (questionId) => {
   if (props.selectedAnswers[questionId]) {
     const question = props.questions.find(q => q.id === questionId);
-    const alternatives = ['ALTERNATIVA_1', 'ALTERNATIVA_2', 'ALTERNATIVA_3', 'ALTERNATIVA_4'];
-    const index = alternatives.findIndex(alt => question[alt] === props.selectedAnswers[questionId]);
-    return ['A', 'B', 'C', 'D'][index];
+    if (question) {
+      const alternatives = ['ALTERNATIVA_1', 'ALTERNATIVA_2', 'ALTERNATIVA_3', 'ALTERNATIVA_4'];
+      const index = alternatives.findIndex(alt => question[alt] === props.selectedAnswers[questionId]);
+      return ['A', 'B', 'C', 'D'][index] || '';
+    }
   }
   return '';
 };
@@ -161,10 +154,10 @@ watch(() => props.selectedAnswers, () => {
                 class="option flex items-center justify-between h-[60px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
             >
               <label
-                  :for="`question${topic.id}-${question.globalIndex}`"
+                  :for="`question${topic.id}-${question.id}`"
                   class="pl-[20px] cursor-pointer flex-grow truncate-label"
               >
-                {{ question.globalIndex }}. {{ question.DESCRIPCIÓN_DE_LA_PREGUNTA }}
+                {{ question.DESCRIPCIÓN_DE_LA_PREGUNTA }}
               </label>
               <div
                   class="circle-alrt rounded-full fixed-size border-2 mr-2 flex items-center justify-center"
@@ -188,7 +181,7 @@ watch(() => props.selectedAnswers, () => {
         </div>
         <div class="flex justify-between text-sm">
           <p>
-            Resumen de preguntas ({{ Object.keys(props.selectedAnswers).length }}/{{ props.totalQuestions }})
+            Resumen de preguntas ({{ answeredQuestionsCount }}/{{ questions.length }})
           </p>
           <p>{{ progressPercentage.toFixed(0) }}%</p>
         </div>

@@ -19,6 +19,13 @@ const formattedCategory = computed(() => {
   return userData.value ? userData.value.categoria : '';
 });
 
+const upperCaseName = computed(() => {
+  if (userData.value) {
+    return `${userData.value.nombre.toUpperCase()} ${userData.value.apellidos.toUpperCase()}`;
+  }
+  return '';
+});
+
 onMounted(() => {
   const storedUserData = localStorage.getItem('userData');
   if (storedUserData) {
@@ -70,7 +77,7 @@ const startExam = () => {
             <div class="text-center flex flex-col gap-[2px]">
               <p class="text-size-20 font-normal text-black">{{ userData.numeroDocumento }}</p>
               <p class="text-color-gray text-size-12">
-                {{ userData.nombre }} {{ userData.apellidos }}
+                {{ upperCaseName }}
               </p>
             </div>
           </div>
