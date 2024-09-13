@@ -4,7 +4,7 @@ import { ref } from "vue";
 import { defineProps, defineEmits } from "vue";
 import { Menu } from "lucide-vue-next";
 import Sidebar from "./home/NabBar.vue";
-import { logInfo } from "@/utils/logger.js";
+import { logInfo, logDebug } from "@/utils/logger.js";
 
 const router = useRouter()
 const route = useRoute()
@@ -23,6 +23,7 @@ const props = defineProps({
 const emit = defineEmits(["toggle-sidebar"]);
 
 const isSidebarVisible = ref(false);
+const clickCount = ref(0);
 
 const toggleSidebar = () => {
   isSidebarVisible.value = !isSidebarVisible.value;
@@ -30,41 +31,50 @@ const toggleSidebar = () => {
   logInfo("Sidebar toggled");
 };
 
-function goToLoginAdmin() {
+function handleAdminClick() {
   if (route.path === '/') {
-    router.push("/login-admin")
+    clickCount.value++;
+    logDebug(`Click count: ${clickCount.value}`);
+    if (clickCount.value === 3) {
+      router.push("/login-admin");
+      clickCount.value = 0;
+    }
   } else {
-    console.log("Solo puedes hacer doble clic en la ruta raíz");
+    logInfo("Solo puedes acceder al admin en la ruta raíz");
   }
 }
 </script>
 
 <template>
   <header
-    class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between responsive-header"
+      class="bg-red-700 text-white h-[87px] p-[15px] flex items-center justify-between responsive-header"
   >
     <div class="w-[250px] flex items-center">
       <button v-if="showMenuIcon" @click="toggleSidebar" class="mr-4">
-        <Menu class="w-[30px] h-[30px] responsive-icon" />
+        <Menu class="w-[30px] h-[30px] responsive-icon"/>
       </button>
     </div>
     <h2
-      class="text-[22px] tracking-[-0.88px] font-normal whitespace-nowrap overflow-hidden overflow-ellipsis flex-grow text-center responsive-title"
+        class="text-[22px] tracking-[-0.88px] font-normal whitespace-nowrap overflow-hidden overflow-ellipsis flex-grow text-center responsive-title"
     >
       {{ title }}
     </h2>
-    <div @dblclick="goToLoginAdmin" class="h-[54px] w-[250px] flex justify-end">
-
+    <div class="h-[87px] w-[250px] flex justify-end items-center">
+      <div class="relative">
         <img
-          src="@/assets/images/logo-mtc.png"
-          alt="MTC Logo"
-          class="w-full right-2 py-1 object-contain responsive-logo"
+            src="@/assets/images/logo-mtc.png"
+            alt="MTC Logo"
+            class="w-full py-1 object-contain responsive-logo"
         />
-
+        <div
+            @click="handleAdminClick"
+            class="absolute inset-0 cursor-default"
+        ></div>
+      </div>
     </div>
   </header>
 
-  <Sidebar :isVisible="isSidebarVisible" @close="isSidebarVisible = false" />
+  <Sidebar :isVisible="isSidebarVisible" @close="isSidebarVisible = false"/>
 </template>
 
 <style scoped>
@@ -74,9 +84,9 @@ header {
 
 @media screen and (max-width: 1800px) {
   .responsive-header {
-    height: 78px; 
+    height: 78px;
     padding-top: 13.5px;
-    padding-bottom: 13.5px; 
+    padding-bottom: 13.5px;
   }
 
   .responsive-title {
