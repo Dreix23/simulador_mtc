@@ -106,6 +106,9 @@ export const getQuestionsByCategory = async () => {
 
             const aiQuestionsToAdd = selectRandomQuestions(aiQuestions, 20);
             finalQuestions = [...finalQuestions, ...aiQuestionsToAdd];
+        } else if (userCategory === 'BIIB' || userCategory === 'BIIA') {
+            const biiaQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIA');
+            finalQuestions = selectRandomQuestions(biiaQuestions, 40);
         } else {
             const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userCategory);
             finalQuestions = selectRandomQuestions(categoryQuestions, 40);
