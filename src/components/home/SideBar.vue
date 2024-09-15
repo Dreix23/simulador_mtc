@@ -113,10 +113,10 @@ watch(() => props.selectedAnswers, () => {
 
 <template>
   <aside
-      class="left-pane py-[20px]"
+      class="left-pane pt-[20px]"
       :style="{ width: leftPaneWidth, maxWidth: maxWidth }"
   >
-    <div class="flex flex-col gap-[10px] items-center border-b-2 pb-[20px]">
+    <div class="h-[250px] flex flex-col gap-[10px] items-center justify-center border-b-2 pb-[20px]">
       <h1 class="uppercase text-size-18 text-red-600 font-medium">
         Postulante
       </h1>
@@ -151,7 +151,7 @@ watch(() => props.selectedAnswers, () => {
                 v-for="question in topic.questions"
                 :key="question.id"
                 @click="selectQuestion(question.id)"
-                class="option flex items-center justify-between h-[60px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
+                class="option flex items-center justify-between h-[42px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
             >
               <label
                   :for="`question${topic.id}-${question.id}`"
