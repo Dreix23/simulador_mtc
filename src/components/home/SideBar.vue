@@ -137,7 +137,7 @@ watch(() => props.selectedAnswers, () => {
         <div v-for="topic in topics" :key="topic.id" class="border-b-2">
           <div
               @click="toggleTopic(topic.id)"
-              class="flex items-center justify-between cursor-pointer h-[60px] bg-gray-50 pl-[20px]"
+              class="flex items-center justify-between cursor-pointer h-[55.2px] bg-gray-50 pl-[20px]"
           >
             <h3 class="font-medium truncate-topic">{{ topic.title }}</h3>
             <ChevronDown v-if="!topic.expanded" />
@@ -151,7 +151,7 @@ watch(() => props.selectedAnswers, () => {
                 v-for="question in topic.questions"
                 :key="question.id"
                 @click="selectQuestion(question.id)"
-                class="option flex items-center justify-between h-[42px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
+                class="option flex items-center justify-between h-[38px] hover:bg-custom-red hover:text-white transition-colors duration-200 ease-in-out rounded-md cursor-pointer"
             >
               <label
                   :for="`question${topic.id}-${question.id}`"
@@ -160,7 +160,7 @@ watch(() => props.selectedAnswers, () => {
                 {{ question.DESCRIPCIÓN_DE_LA_PREGUNTA }}
               </label>
               <div
-                  class="circle-alrt rounded-full fixed-size border-2 mr-2 flex items-center justify-center"
+                  class="circle-alrt rounded-full fixed-size border-[1px] mr-2 flex items-center justify-center"
                   :class="{
                   'border-gray-400': getQuestionStatus(question.id) === 'unanswered',
                   'border-red-400': getQuestionStatus(question.id) === 'answered'
@@ -192,11 +192,15 @@ watch(() => props.selectedAnswers, () => {
 
 <style scoped>
 .circle-alrt {
-  width: 35px;
-  height: 35px;
+  width: 25px !important;
+  height: 25px !important;
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 10px !important;
   font-weight: bold;
+}
+
+.circle-alrt span{
+  font-size: 14px !important;
 }
 
 .left-pane {
