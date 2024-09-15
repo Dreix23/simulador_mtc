@@ -195,14 +195,12 @@ watch(() => props.selectedAnswers, () => {
   width: 25px !important;
   height: 25px !important;
   flex-shrink: 0;
-  font-size: 10px !important;
   font-weight: bold;
 }
 
 .circle-alrt span{
-  font-size: 14px !important;
+  font-size: 18px !important;
 }
-
 .left-pane {
   min-width: 300px;
   background-color: #fff;

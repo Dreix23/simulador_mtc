@@ -322,10 +322,10 @@ const isHidden = computed(() => zoomLevel.value === 0);
                 class="mb-4"
               >
                 <label
-                  class="flex items-start cursor-pointer"
+                  class="flex  items-center cursor-pointer"
                   :style="{ fontSize: baseFontSize }"
                 >
-                  <div class="flex-none">
+                  <div class="flex ">
                     <input
                       type="radio"
                       :name="`question${currentQuestion.id}`"
@@ -344,7 +344,7 @@ const isHidden = computed(() => zoomLevel.value === 0);
                       "
                     />
                   </div>
-                  <div class="flex-1">
+                  <div >
                     <span class="break-words">
                       {{
                         isImageAlternative(currentQuestion[alternative])
