@@ -168,7 +168,7 @@ export const userService = {
     async countUsersToDelete() {
         try {
             const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 14);
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 0);
 
             const q = query(
                 collection(db, 'users'),
@@ -189,7 +189,7 @@ export const userService = {
     async deleteOldUsers() {
         try {
             const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 14);
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 0);
 
             const usersQuery = query(
                 collection(db, 'users'),
