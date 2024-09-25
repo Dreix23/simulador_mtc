@@ -6,6 +6,9 @@ import * as XLSX from 'xlsx';
 
 const CACHE_KEY = 'users_cache';
 
+const documentTypes = ["DNI", "CE", "CSR", "PTP", "CID"];
+const categories = ["AI", "BIIA", "BIIB", "AIIA", "AIIB", "AIIIA", "AIIIB", "AIIIC", "BIIC"];
+
 export const userService = {
     async getUsers() {
         try {
@@ -147,16 +150,45 @@ export const userService = {
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
             const addedUsers = [];
-            for (const row of jsonData) {
-                const user = await this.addUser({
-                    tipoDocumento: row['TIP DOC'] || '',
-                    numeroDocumento: row['NUM DOC'],
-                    apellidos: row['APELLIDOS'] || '',
-                    nombre: row['NOMBRES'] || '',
-                    categoria: row['CAT EXA'] || '',
-                });
-                addedUsers.push(user);
+            const errors = [];
+
+            for (let i = 0; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                const rowNumber = i + 2; // Las filas de Excel comienzan en 1, y tenemos una fila de encabezado
+
+                const tipoDocumento = row['TIP DOC'] || '';
+                const categoria = row['CAT EXA'] || '';
+
+                if (!documentTypes.includes(tipoDocumento)) {
+                    errors.push(`Fila ${rowNumber}: Tipo de documento "${tipoDocumento}" no válido`);
+                }
+
+                if (!categories.includes(categoria)) {
+                    errors.push(`Fila ${rowNumber}: Categoría "${categoria}" no válida`);
+                }
+
+                if (errors.length === 0) {
+                    try {
+                        const user = await this.addUser({
+                            tipoDocumento: tipoDocumento,
+                            numeroDocumento: row['NUM DOC'],
+                            apellidos: row['APELLIDOS'] || '',
+                            nombre: row['NOMBRES'] || '',
+                            categoria: categoria,
+                        });
+                        addedUsers.push(user);
+                    } catch (error) {
+                        errors.push(`Fila ${rowNumber}: Error al añadir usuario - ${error.message}`);
+                    }
+                }
             }
+
+            if (errors.length > 0) {
+                const errorMessage = errors.join('\n');
+                logError(`Errores en la carga de Excel:\n${errorMessage}`);
+                throw new Error(errorMessage);
+            }
+
             logInfo(`${addedUsers.length} usuarios importados desde Excel`);
             return addedUsers;
         } catch (error) {

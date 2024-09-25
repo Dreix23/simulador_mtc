@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { Loader2, FileDown, FileUp } from 'lucide-vue-next';
 import { logError, logInfo } from '@/utils/logger.js';
 import { userService } from '@/services/user_service.js';
+import ExcelErrorDialog from './ExcelErrorDialog.vue';
 
 const props = defineProps({
   isLoading: {
@@ -11,9 +12,11 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update:isLoading']);
+const emit = defineEmits(['update:isLoading', 'usersAdded']);
 
 const fileInput = ref(null);
+const showErrorDialog = ref(false);
+const errorSummary = ref({ message: '', details: {} });
 
 const downloadExcelTemplate = () => {
   const link = document.createElement('a');
@@ -37,13 +40,35 @@ const handleExcelUpload = async (event) => {
     try {
       const addedUsers = await userService.processExcelFile(file);
       logInfo(`${addedUsers.length} usuarios importados desde Excel`);
+      emit('usersAdded', addedUsers);
     } catch (error) {
       logError(`Error al procesar el archivo Excel: ${error.message}`);
+      const errors = error.message.split('\n');
+      const errorTypes = {
+        categoria: 0,
+        tipoDocumento: 0,
+        otros: 0
+      };
+      errors.forEach(err => {
+        if (err.includes('Categoría')) errorTypes.categoria++;
+        else if (err.includes('Tipo de documento')) errorTypes.tipoDocumento++;
+        else errorTypes.otros++;
+      });
+      errorSummary.value = {
+        message: 'Se encontraron errores en el archivo Excel.',
+        details: errorTypes
+      };
+      showErrorDialog.value = true;
     } finally {
       emit('update:isLoading', {...props.isLoading, uploadExcel: false});
       event.target.value = '';
     }
   }
+};
+
+const closeErrorDialog = () => {
+  showErrorDialog.value = false;
+  errorSummary.value = { message: '', details: {} };
 };
 
 const getColorClass = (color) => {
@@ -92,6 +117,11 @@ const getColorClass = (color) => {
         @change="handleExcelUpload"
         accept=".xlsx,.xls"
         class="hidden"
+    />
+    <ExcelErrorDialog
+        :is-open="showErrorDialog"
+        :error-summary="errorSummary"
+        @close="closeErrorDialog"
     />
   </div>
 </template>
