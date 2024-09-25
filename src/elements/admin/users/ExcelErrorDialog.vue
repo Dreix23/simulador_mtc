@@ -15,7 +15,7 @@ const closeDialog = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+  <div v-if="isOpen" class="fixed inset-0  bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4 transform transition-all duration-300 ease-in-out">
       <div class="flex flex-col items-center text-center mb-4">
         <AlertCircle class="text-red-500 w-24 h-24 mb-4" />

@@ -84,33 +84,34 @@ const getColorClass = (color) => {
 </script>
 
 <template>
-  <div class="space-x-4">
-    <button
-        @click="downloadExcelTemplate"
-        :disabled="isLoading.downloadExcel"
-        :class="[
+   <div class="flex gap-4">
+     <button
+         @click="downloadExcelTemplate"
+         :disabled="isLoading.downloadExcel"
+         :class="[
         'w-50 cursor-pointer inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 h-12',
         getColorClass('green'),
         { 'opacity-50 cursor-not-allowed': isLoading.downloadExcel }
       ]"
-    >
-      <Loader2 v-if="isLoading.downloadExcel" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"/>
-      <FileDown v-else class="-ml-1 mr-3 h-5 w-5"/>
-      Descargar Plantilla
-    </button>
-    <button
-        @click="uploadExcel"
-        :disabled="isLoading.uploadExcel"
-        :class="[
+     >
+       <Loader2 v-if="isLoading.downloadExcel" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"/>
+       <FileDown v-else class="-ml-1 mr-3 h-5 w-5"/>
+       Descargar Plantilla
+     </button>
+     <button
+         @click="uploadExcel"
+         :disabled="isLoading.uploadExcel"
+         :class="[
         'w-40 cursor-pointer inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 h-12',
         getColorClass('blue'),
         { 'opacity-50 cursor-not-allowed': isLoading.uploadExcel }
       ]"
-    >
-      <Loader2 v-if="isLoading.uploadExcel" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"/>
-      <FileUp v-else class="-ml-1 mr-3 h-5 w-5"/>
-      Subir Plantilla
-    </button>
+     >
+       <Loader2 v-if="isLoading.uploadExcel" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"/>
+       <FileUp v-else class="-ml-1 mr-3 h-5 w-5"/>
+       Subir Plantilla
+     </button>
+   </div>
     <input
         type="file"
         ref="fileInput"
@@ -123,7 +124,6 @@ const getColorClass = (color) => {
         :error-summary="errorSummary"
         @close="closeErrorDialog"
     />
-  </div>
 </template>
 
 <style scoped>
