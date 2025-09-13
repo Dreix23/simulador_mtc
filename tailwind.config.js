@@ -1,11 +1,12 @@
+import { addDynamicIconSelectors } from '@iconify/tailwind';
+
 /** @type {import('tailwindcss').Config} */
-const { addDynamicIconSelectors } = require("@iconify/tailwind");
 export default {
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
   theme: {
     extend: {
       screens:{
-       'max-1560': {'max': '1560px'},
+        'max-1560': {'max': '1560px'},
       },
       fontSize: {
         "size-10": "10px",
@@ -18,7 +19,7 @@ export default {
         "size-20": "20px",
       },
       colors: {
-        "color-gray": "#5B5555",
+        "color-gray": "#676363",
         "color-gray-line": "#E0E0E0",
         "color-red": "#D25353",
         "color-red-bg": "#B0000B",

@@ -1,14 +1,15 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import {ref, onMounted, onUnmounted} from 'vue';
 import MacBlackImg from "@/assets/images/macblack.svg";
-import { FooterService } from '@/services/footer_service';
-import { logInfo, logError, logDebug } from '@/utils/logger.js';
-import { Loader2, Trash2 } from 'lucide-vue-next';
+import {FooterService} from '@/services/footer_service';
+import {logInfo, logError, logDebug} from '@/utils/logger.js';
+import {Loader2, Trash2} from 'lucide-vue-next';
 
 const devices = ref([]);
 const isLoading = ref(false);
 const isLoadingMap = ref({});
 const isDeletingMap = ref({});
+const isDeletingAll = ref(false);
 let unsubscribes = [];
 
 const updateDeviceInfo = async (device) => {
@@ -63,6 +64,21 @@ const deleteDevice = async (device) => {
   }
 };
 
+const deleteAllDevices = async () => {
+  try {
+    isDeletingAll.value = true;
+    for (const device of devices.value) {
+      await FooterService.deleteDevice(device.id);
+    }
+    devices.value = [];
+    logInfo('Todos los dispositivos han sido eliminados');
+  } catch (error) {
+    logError(`Error al eliminar todos los dispositivos: ${error.message}`);
+  } finally {
+    isDeletingAll.value = false;
+  }
+};
+
 onMounted(async () => {
   try {
     await loadDevices();
@@ -96,12 +112,28 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
-    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Cambiar IP y MAC</h2>
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Cambiar IP y MAC</h2>
+      <button
+          @click="deleteAllDevices"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 ease-in-out transform hover:scale-105"
+          :class="{ 'opacity-50 cursor-not-allowed': isDeletingAll || devices.length === 0 }"
+          :disabled="isDeletingAll || devices.length === 0"
+      >
+        <Trash2 class="w-5 h-5 mr-2"/>
+        <span v-if="!isDeletingAll">Eliminar todas las PC</span>
+        <span v-else class="flex items-center">
+          <Loader2 class="animate-spin mr-2"/>
+          Eliminando...
+        </span>
+      </button>
+    </div>
     <div class="flex flex-wrap justify-center gap-4">
       <div v-for="device in devices" :key="device.id"
            class="w-full max-w-[300px] h-[260px] flex justify-center items-start pt-[22px] bg-[url('@/assets/images/desktop.svg')] bg-cover bg-no-repeat relative"
       >
-        <form @submit.prevent="updateDeviceInfo(device)" class="flex flex-col gap-[15px] items-center w-full max-w-[200px]">
+        <form @submit.prevent="updateDeviceInfo(device)"
+              class="flex flex-col gap-[15px] items-center w-full max-w-[200px]">
           <div class="flex items-center gap-[5px] w-full">
             <label :for="`ip-${device.id}`" class="block text-sm font-medium text-gray-700">
               <span class="icon-[mdi--ip-network-outline] text-[24px]"></span>
@@ -116,7 +148,7 @@ onUnmounted(() => {
           </div>
           <div class="flex items-center gap-[5px] w-full">
             <label :for="`mac-${device.id}`" class="block text-sm font-medium text-gray-700">
-              <img :src="MacBlackImg" alt="" class="w-[24px] h-[24px]" />
+              <img :src="MacBlackImg" alt="" class="w-[24px] h-[24px]"/>
             </label>
             <input
                 :id="`mac-${device.id}`"
@@ -128,20 +160,20 @@ onUnmounted(() => {
           </div>
           <button
               type="submit"
-              class="h-[35px] flex w-full justify-center items-center rounded-[8px] text-size-12 bg-blue-600 hover:bg-blue-700 text-white"
+              class="h-[35px] flex w-full justify-center items-center rounded-[8px] text-size-12 bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 ease-in-out"
               :disabled="isLoadingMap[device.id] || isDeletingMap[device.id]"
           >
-            <Loader2 v-if="isLoadingMap[device.id]" class="animate-spin" />
+            <Loader2 v-if="isLoadingMap[device.id]" class="animate-spin"/>
             <span v-else>Guardar</span>
           </button>
         </form>
         <button
             @click="deleteDevice(device)"
-            class="absolute top-2 right-2 p-2 text-red-600 hover:text-red-800"
+            class="absolute top-2 right-2 p-2 text-red-600 hover:text-red-800 transition-colors duration-200 ease-in-out"
             :disabled="isLoadingMap[device.id] || isDeletingMap[device.id]"
         >
-          <Loader2 v-if="isDeletingMap[device.id]" class="animate-spin" />
-          <Trash2 v-else class="w-5 h-5" />
+          <Loader2 v-if="isDeletingMap[device.id]" class="animate-spin"/>
+          <Trash2 v-else class="w-5 h-5"/>
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { IdCard, ChevronDown, Loader2 } from "lucide-vue-next";
+import { ChevronDown, Loader2 } from "lucide-vue-next";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import Cardsvg from "@/assets/images/card.svg";
@@ -21,38 +21,46 @@ const documentTypes = [
 const documentNumber = ref("");
 const isMenuOpen = ref(false);
 const isLoading = ref(false);
-const isDocumentNotFound = ref(false); 
+const isDocumentNotFound = ref(false);
+const errorMessage = ref("");
 
 const handleSubmit = async () => {
   isLoading.value = true;
+  isDocumentNotFound.value = false;
+  errorMessage.value = "";
+
   try {
-    const isValid = await validacionDocumentoService.validarDocumento(
-      selectedDocumentType.value,
-      documentNumber.value
-    );
-    if (isValid) {
-      const userData = await validacionDocumentoService.obtenerDatosUsuario(
+    const validationResult = await validacionDocumentoService.validarDocumento(
         selectedDocumentType.value,
         documentNumber.value
+    );
+
+    if (validationResult === true) {
+      const userData = await validacionDocumentoService.obtenerDatosUsuario(
+          selectedDocumentType.value,
+          documentNumber.value
       );
+
       if (userData) {
         localStorage.setItem("userData", JSON.stringify(userData));
         logInfo("Documento válido, redirigiendo al perfil");
         router.push({ name: "Profile" });
       } else {
         logInfo("Datos de usuario no encontrados");
-        alert("No se pudieron obtener los datos del usuario.");
+        errorMessage.value = "No se pudieron obtener los datos del usuario.";
       }
+    } else if (validationResult === 'no_attempts') {
+      logInfo("Usuario ya dio el examen");
+      errorMessage.value = "Ya has completado el examen. No tienes más intentos disponibles.";
+      isDocumentNotFound.value = true;
     } else {
       logInfo("Documento no encontrado en la base de datos");
       isDocumentNotFound.value = true;
-
+      errorMessage.value = "El documento ingresado no se encuentra registrado.";
     }
   } catch (error) {
     logError(`Error al validar el documento: ${error.message}`);
-    alert(
-      "Ocurrió un error al validar el documento. Por favor, intente nuevamente."
-    );
+    errorMessage.value = "Ocurrió un error al validar el documento. Por favor, intente nuevamente.";
   } finally {
     isLoading.value = false;
   }
@@ -102,7 +110,7 @@ onUnmounted(() => {
             class="icon-[tabler--point-filled] text-size-10 text-color-red-bg"
           ></span>
           <span class="text-size-11 leading-normal tracking-[0.11px] text-color-red-bg font-semibold"
-            >No se encontro el examen activo</span
+            >No sé encuentra ficha activa</span
           >
         </div>
       </div>

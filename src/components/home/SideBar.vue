@@ -48,7 +48,7 @@ const groupQuestionsByTopic = () => {
   topics.value = Object.keys(groupedQuestions).map((topic, index) => ({
     id: index + 1,
     title: topic,
-    expanded: index === 0,
+    expanded:true,
     questions: groupedQuestions[topic],
   }));
 };
@@ -117,7 +117,7 @@ watch(() => props.selectedAnswers, () => {
       :style="{ width: leftPaneWidth, maxWidth: maxWidth }"
   >
     <div class="h-[250px] flex flex-col gap-[10px] items-center justify-center border-b-2 pb-[20px]">
-      <h1 class="uppercase text-size-18 text-red-600 font-medium">
+      <h1 class="uppercase text-red-600 font-medium postulante-title">
         Postulante
       </h1>
       <img
@@ -125,7 +125,7 @@ watch(() => props.selectedAnswers, () => {
           alt="Imagen de perfil"
           class="w-[112px] h-[122px] p-[5px] border rounded-[5px] object-contain"
       />
-      <p class="uppercase text-size-16 font-medium">
+      <p class="uppercase text-size-16 font-medium text-color-gray">
         {{ userData?.nombre }} {{ userData?.apellidos }}
       </p>
     </div>
@@ -271,5 +271,9 @@ watch(() => props.selectedAnswers, () => {
 
 .resumen .bg-red-400 {
   background-color: #b91c1c;
+}
+
+.postulante-title {
+  font-size: 19px;
 }
 </style>

@@ -29,6 +29,11 @@ onMounted(() => {
     router.push('/');
   }
   isLoading.value = false;
+
+  // Redirigir automáticamente después de 10 segundos
+  setTimeout(() => {
+    router.push('/');
+  }, 10000);
 });
 
 const startNewExam = () => {

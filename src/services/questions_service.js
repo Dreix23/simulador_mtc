@@ -36,11 +36,6 @@ const obfuscateAnswer = (answer) => {
     return encodeURIComponent(answer).split('').reverse().join('');
 };
 
-const deobfuscateAnswer = (obfuscatedAnswer) => {
-    const reversedString = obfuscatedAnswer.split('').reverse().join('');
-    return decodeURIComponent(reversedString);
-};
-
 const fetchAllQuestionsFromDB = () => {
     return new Promise((resolve, reject) => {
         const questionsRef = collection(db, 'questionnaire');
@@ -92,8 +87,11 @@ export const getQuestionsByCategory = async () => {
         let finalQuestions = [];
 
         if (['AIIA', 'AIIB', 'AIIIA', 'AIIIB', 'AIIIC'].includes(userCategory)) {
-            const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userCategory);
-            const aiQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'AI');
+            // TODO: Remover este filtro temporal cuando se actualice la base de datos
+            const filteredQuestions = cachedQuestions.filter(q => q.TEMA !== 'Mercancías peligrosas');
+
+            const categoryQuestions = filteredQuestions.filter(q => q.CATEGORIA === userCategory);
+            const aiQuestions = filteredQuestions.filter(q => q.CATEGORIA === 'AI');
 
             if (categoryQuestions.length >= 20) {
                 finalQuestions = [...selectRandomQuestions(categoryQuestions, 20)];
@@ -144,24 +142,9 @@ export const getQuestionsByCategory = async () => {
     }
 };
 
-export const getInitialQuestion = async () => {
-    try {
-        const questions = await getQuestionsByCategory();
-        return questions[0] || null;
-    } catch (error) {
-        logError('Error al obtener la pregunta inicial:', error);
-        throw error;
-    }
-};
-
 export const unsubscribeFromQuestions = () => {
     if (unsubscribe) {
         unsubscribe();
         logInfo('Desuscrito del listener de preguntas');
     }
-};
-
-export const checkAnswer = (question, userAnswer) => {
-    const deobfuscatedCorrectAnswer = deobfuscateAnswer(question.RESPUESTA);
-    return userAnswer === deobfuscatedCorrectAnswer;
 };

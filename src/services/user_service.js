@@ -269,5 +269,20 @@ export const userService = {
             logError('Error al eliminar usuarios antiguos:', error);
             throw error;
         }
+    },
+
+    async updateUserAttempt(userId, hasAttempt) {
+        try {
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+                hasAttempt,
+                lastUpdated: Timestamp.now()
+            });
+            logInfo(`Estado de intento actualizado para usuario: ${userId}`);
+            return true;
+        } catch (error) {
+            logError(`Error al actualizar estado de intento: ${error.message}`);
+            throw error;
+        }
     }
 };

@@ -9,18 +9,9 @@ import SideBar from "@/components/home/SideBar.vue";
 import ZoomControl from "@/components/home/ZoomControl.vue";
 import ConfirmationDialog from "@/components/home/ConfirmationDialog.vue";
 import { logInfo, logError, logDebug } from "@/utils/logger.js";
-import {
-  getQuestionsByCategory,
-  unsubscribeFromQuestions,
-} from "@/services/questions_service.js";
+import {getQuestionsByCategory, unsubscribeFromQuestions,} from "@/services/questions_service.js";
 import { saveExamResults } from "@/services/results_service.js";
-import {
-  formatTime,
-  getImageUrl,
-  isImageAlternative,
-  calculateScore,
-  useExamState,
-} from "@/utils/exam_utils.js";
+import {formatTime, getImageUrl, isImageAlternative, calculateScore, useExamState,} from "@/utils/exam_utils.js";
 import { formatCategory } from "@/utils/category_formatter";
 
 const router = useRouter();

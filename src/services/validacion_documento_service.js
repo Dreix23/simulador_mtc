@@ -16,10 +16,18 @@ export const validacionDocumentoService = {
             if (querySnapshot.empty) {
                 logInfo(`No se encontró documento: ${tipoDocumento} - ${numeroDocumento}`);
                 return false;
-            } else {
-                logInfo(`Documento encontrado: ${tipoDocumento} - ${numeroDocumento}`);
-                return true;
             }
+
+            const userData = querySnapshot.docs[0].data();
+
+            // Verificar si el usuario ya no tiene intentos disponibles
+            if (userData.hasAttempt === false) {
+                logInfo(`Usuario ${numeroDocumento} ya no tiene intentos disponibles`);
+                return 'no_attempts';
+            }
+
+            logInfo(`Documento encontrado y con intentos disponibles: ${tipoDocumento} - ${numeroDocumento}`);
+            return true;
         } catch (error) {
             logError(`Error al validar documento: ${error.message}`);
             throw error;
@@ -39,19 +47,23 @@ export const validacionDocumentoService = {
             if (querySnapshot.empty) {
                 logInfo(`No se encontró usuario: ${tipoDocumento} - ${numeroDocumento}`);
                 return null;
-            } else {
-                const userData = querySnapshot.docs[0].data();
-                logInfo(`Datos de usuario obtenidos para: ${tipoDocumento} - ${numeroDocumento}`);
-                return {
-                    tipoDocumento: userData.tipoDocumento,
-                    numeroDocumento: userData.numeroDocumento,
-                    nombre: userData.nombre,
-                    apellidos: userData.apellidos,
-                    categoria: userData.categoria,
-                    imagenUrl: userData.imagenUrl,
-                    fechaNacimiento: userData.fechaNacimiento
-                };
             }
+
+            const userData = querySnapshot.docs[0].data();
+            const userWithId = {
+                id: querySnapshot.docs[0].id,
+                tipoDocumento: userData.tipoDocumento,
+                numeroDocumento: userData.numeroDocumento,
+                nombre: userData.nombre,
+                apellidos: userData.apellidos,
+                categoria: userData.categoria,
+                imagenUrl: userData.imagenUrl,
+                fechaNacimiento: userData.fechaNacimiento,
+                hasAttempt: userData.hasAttempt !== false // Si no existe, se considera true
+            };
+
+            logInfo(`Datos de usuario obtenidos para: ${tipoDocumento} - ${numeroDocumento}`);
+            return userWithId;
         } catch (error) {
             logError(`Error al obtener datos del usuario: ${error.message}`);
             throw error;

@@ -1,6 +1,7 @@
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { logInfo, logError } from '@/utils/logger.js';
+import { userService } from './user_service';
 
 export const saveExamResults = async (score) => {
     try {
@@ -10,6 +11,7 @@ export const saveExamResults = async (score) => {
         }
         const userData = JSON.parse(storedUserData);
 
+        // Guardar resultados del examen
         const examResults = {
             numeroDocumento: userData.numeroDocumento,
             score,
@@ -18,6 +20,19 @@ export const saveExamResults = async (score) => {
 
         const docRef = await addDoc(collection(db, 'examResults'), examResults);
         logInfo(`Resultados del examen guardados con ID: ${docRef.id}`);
+
+        // Buscar el usuario por número de documento
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("numeroDocumento", "==", userData.numeroDocumento));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            // Actualizar el estado del intento a false
+            await userService.updateUserAttempt(userDoc.id, false);
+            logInfo(`Estado de intento actualizado para usuario: ${userDoc.id}`);
+        }
+
         return docRef.id;
     } catch (error) {
         logError('Error al guardar los resultados del examen:', error);

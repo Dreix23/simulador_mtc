@@ -1,6 +1,6 @@
 <script setup>
 import {ref, computed, onMounted} from "vue";
-import {Trash2, Edit2, Search} from "lucide-vue-next";
+import {Trash2, Edit2, Search, Loader2} from "lucide-vue-next";
 import {logInfo, logError} from "@/utils/logger.js";
 import {userService} from "@/services/user_service.js";
 import {getExamResults} from "@/services/results_service.js";
@@ -23,6 +23,20 @@ const showConfirmDialog = ref(false);
 const showConfirmDeleteAllDialog = ref(false);
 const userToDelete = ref(null);
 const isDeleteAllLoading = ref(false);
+const switchLoading = ref(null);
+
+const toggleUserAttempt = async (user) => {
+  try {
+    switchLoading.value = user.id;
+    await userService.updateUserAttempt(user.id, !user.hasAttempt);
+    emit("usersUpdated");
+    logInfo(`Estado de intento actualizado para usuario: ${user.id}`);
+  } catch (error) {
+    logError(`Error al actualizar intento: ${error.message}`);
+  } finally {
+    switchLoading.value = null;
+  }
+};
 
 const deleteUser = async (userId) => {
   try {
@@ -116,9 +130,7 @@ onMounted(updateExpiredUsersCount);
               class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
           >Search</label>
           <div class="relative">
-            <div
-                class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none"
-            >
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
               <Search class="text-color-gray"/>
             </div>
             <input
@@ -170,6 +182,9 @@ onMounted(updateExpiredUsersCount);
             Imagen
           </th>
           <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Intento
+          </th>
+          <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
             Acciones
           </th>
         </tr>
@@ -207,6 +222,26 @@ onMounted(updateExpiredUsersCount);
                 class="h-8 w-8 rounded-full object-cover"
             />
             <span v-else>-</span>
+          </td>
+          <td class="px-3 py-4 whitespace-nowrap text-sm font-medium" @click.stop>
+            <div class="flex justify-center">
+              <button
+                  @click="toggleUserAttempt(user)"
+                  :disabled="switchLoading === user.id"
+                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                  :class="[user.hasAttempt !== false ? 'bg-blue-600' : 'bg-gray-200']"
+              >
+                <span v-if="switchLoading === user.id"
+                      class="absolute inset-0 flex items-center justify-center">
+                  <Loader2 class="h-4 w-4 text-white animate-spin" />
+                </span>
+                <span
+                    v-else
+                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                    :class="[user.hasAttempt !== false ? 'translate-x-5' : 'translate-x-0']"
+                />
+              </button>
+            </div>
           </td>
           <td class="px-3 py-4 whitespace-nowrap text-sm font-medium" @click.stop>
             <div class="flex justify-center space-x-4">
