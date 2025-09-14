@@ -34,24 +34,49 @@ const loadQuestionnaire = (data) => {
 
     questionnaire.value = {
       id: sortedData[0].id,
-      title: sortedData[0].TEMA,
-      questions: sortedData.map(questionData => ({
-        id: questionData.id,
-        text: questionData.DESCRIPCIÓN_DE_LA_PREGUNTA,
-        options: [
+      title: sortedData[0].TEMA || "",
+      questions: sortedData.map(questionData => {
+        // Validar y obtener el índice de la respuesta correcta
+        let correctOptionIndex = 0;
+        if (questionData.RESPUESTA) {
+          const respuestaUpperCase = questionData.RESPUESTA.toString().toUpperCase();
+          const index = ['A', 'B', 'C', 'D'].indexOf(respuestaUpperCase);
+          if (index !== -1) {
+            correctOptionIndex = index;
+          }
+        }
+
+        // Validar y filtrar opciones vacías o undefined
+        const options = [
           questionData.ALTERNATIVA_1,
           questionData.ALTERNATIVA_2,
           questionData.ALTERNATIVA_3,
           questionData.ALTERNATIVA_4
-        ],
-        correctOption: ['A', 'B', 'C', 'D'].indexOf(questionData.RESPUESTA.toUpperCase()),
-        image: null,
-        imageUrl: questionData.IMAGE_URL || null,
-        imagePreview: questionData.IMAGE_URL || null,
-        category: mapCategory(questionData.CATEGORIA),
-        tipo_de_materia: questionData.TIPO_DE_MATERIA,
-        fundamento: questionData.FUNDAMENTO || "",
-      })),
+        ].filter(option => option !== undefined && option !== null);
+
+        // Si no hay opciones válidas, crear opciones vacías
+        if (options.length === 0) {
+          options.push("", "", "", "");
+        } else {
+          // Rellenar con strings vacíos si hay menos de 4 opciones
+          while (options.length < 4) {
+            options.push("");
+          }
+        }
+
+        return {
+          id: questionData.id,
+          text: questionData.DESCRIPCIÓN_DE_LA_PREGUNTA || "",
+          options: options,
+          correctOption: correctOptionIndex,
+          image: null,
+          imageUrl: questionData.IMAGE_URL || null,
+          imagePreview: questionData.IMAGE_URL || null,
+          category: mapCategory(questionData.CATEGORIA || ""),
+          tipo_de_materia: questionData.TIPO_DE_MATERIA || "",
+          fundamento: questionData.FUNDAMENTO || "",
+        };
+      }),
     };
 
     if (questionnaire.value.questions.length > 0) {
@@ -212,7 +237,6 @@ watch(selectedCategory, (newCategory) => {
   updateAllQuestionsCategory(questionnaire.value, newCategory);
 });
 
-// Actualizar tipo_de_materia en todas las preguntas
 watch(selectedTipoMateria, (newTipoMateria) => {
   if (questionnaire.value && questionnaire.value.questions) {
     questionnaire.value.questions.forEach(question => {

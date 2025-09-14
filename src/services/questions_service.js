@@ -41,21 +41,23 @@ const fetchAllQuestionsFromDB = () => {
         const questionsRef = collection(db, 'questionnaire');
 
         unsubscribe = onSnapshot(questionsRef, (querySnapshot) => {
-            const allQuestions = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ALTERNATIVA_1: doc.data().ALTERNATIVA_1,
-                ALTERNATIVA_2: doc.data().ALTERNATIVA_2,
-                ALTERNATIVA_3: doc.data().ALTERNATIVA_3,
-                ALTERNATIVA_4: doc.data().ALTERNATIVA_4,
-                DESCRIPCIÓN_DE_LA_PREGUNTA: doc.data().DESCRIPCIÓN_DE_LA_PREGUNTA,
-                IMAGE_URL: doc.data().IMAGE_URL,
-                RESPUESTA: obfuscateAnswer(doc.data().RESPUESTA),
-                TEMA: doc.data().TEMA,
-                CATEGORIA: doc.data().CATEGORIA
-            }));
+            const allQuestions = querySnapshot.docs
+                .map(doc => ({
+                    id: doc.id,
+                    ALTERNATIVA_1: doc.data().ALTERNATIVA_1,
+                    ALTERNATIVA_2: doc.data().ALTERNATIVA_2,
+                    ALTERNATIVA_3: doc.data().ALTERNATIVA_3,
+                    ALTERNATIVA_4: doc.data().ALTERNATIVA_4,
+                    DESCRIPCIÓN_DE_LA_PREGUNTA: doc.data().DESCRIPCIÓN_DE_LA_PREGUNTA,
+                    IMAGE_URL: doc.data().IMAGE_URL,
+                    RESPUESTA: obfuscateAnswer(doc.data().RESPUESTA),
+                    TEMA: doc.data().TEMA,
+                    CATEGORIA: doc.data().CATEGORIA
+                }))
+                .filter(question => question.ALTERNATIVA_4 && question.ALTERNATIVA_4.trim() !== '');
 
             saveToCache(allQuestions);
-            logInfo(`Se actualizaron ${allQuestions.length} preguntas en la caché`);
+            logInfo(`Se actualizaron ${allQuestions.length} preguntas en la caché (se excluyeron las de 3 opciones)`);
             resolve(allQuestions);
         }, (error) => {
             logError('Error al obtener las preguntas de la BD:', error);
@@ -83,12 +85,15 @@ export const getQuestionsByCategory = async () => {
             cachedQuestions = await fetchAllQuestionsFromDB();
         }
 
+        const questionsWithFourOptions = cachedQuestions.filter(q =>
+            q.ALTERNATIVA_4 && q.ALTERNATIVA_4.trim() !== ''
+        );
+
         const userCategory = userData.categoria;
         let finalQuestions = [];
 
         if (['AIIA', 'AIIB', 'AIIIA', 'AIIIB', 'AIIIC'].includes(userCategory)) {
-            // TODO: Remover este filtro temporal cuando se actualice la base de datos
-            const filteredQuestions = cachedQuestions.filter(q => q.TEMA !== 'Mercancías peligrosas');
+            const filteredQuestions = questionsWithFourOptions.filter(q => q.TEMA !== 'Mercancías peligrosas');
 
             const categoryQuestions = filteredQuestions.filter(q => q.CATEGORIA === userCategory);
             const aiQuestions = filteredQuestions.filter(q => q.CATEGORIA === 'AI');
@@ -105,18 +110,18 @@ export const getQuestionsByCategory = async () => {
             const aiQuestionsToAdd = selectRandomQuestions(aiQuestions, 20);
             finalQuestions = [...finalQuestions, ...aiQuestionsToAdd];
         } else if (userCategory === 'BIIB' || userCategory === 'BIIA') {
-            const biiaQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIA');
+            const biiaQuestions = questionsWithFourOptions.filter(q => q.CATEGORIA === 'BIIA');
             finalQuestions = selectRandomQuestions(biiaQuestions, 40);
         } else if (userCategory === 'BIIC') {
-            const biicQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIC');
-            const biiaQuestions = cachedQuestions.filter(q => q.CATEGORIA === 'BIIA');
+            const biicQuestions = questionsWithFourOptions.filter(q => q.CATEGORIA === 'BIIC');
+            const biiaQuestions = questionsWithFourOptions.filter(q => q.CATEGORIA === 'BIIA');
 
             const selectedBiicQuestions = selectRandomQuestions(biicQuestions, 20);
             const selectedBiiaQuestions = selectRandomQuestions(biiaQuestions, 20);
 
             finalQuestions = [...selectedBiicQuestions, ...selectedBiiaQuestions];
         } else {
-            const categoryQuestions = cachedQuestions.filter(q => q.CATEGORIA === userCategory);
+            const categoryQuestions = questionsWithFourOptions.filter(q => q.CATEGORIA === userCategory);
             finalQuestions = selectRandomQuestions(categoryQuestions, 40);
         }
 
@@ -132,7 +137,7 @@ export const getQuestionsByCategory = async () => {
 
         finalQuestions = sortedTopics.flatMap(topic => groupedByTopic[topic]);
 
-        logInfo(`Se seleccionaron ${finalQuestions.length} preguntas para la categoría ${userCategory}`);
+        logInfo(`Se seleccionaron ${finalQuestions.length} preguntas para la categoría ${userCategory} (solo con 4 opciones)`);
         localStorage.setItem('questionOrder', JSON.stringify(finalQuestions.map(q => q.id)));
 
         return finalQuestions;
