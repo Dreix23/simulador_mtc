@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, shallowRef } from "vue";
 import { useRoute } from "vue-router";
 import MacImg from "@/assets/images/mac.svg";
-import { logInfo, logError, logDebug } from '@/utils/logger.js';
+import { logInfo, logError } from '@/utils/logger.js';
 import { FooterService } from '@/services/footer_service';
 
 const defaultIp = "192.168.140.142";
@@ -17,47 +17,51 @@ const isRootRoute = shallowRef(route.path === "/");
 
 let unsubscribe = null;
 
-const loadLocalData = () => {
-  const cachedData = localStorage.getItem('deviceInfo');
-  if (cachedData) {
-    const { ip: cachedIp, mac: cachedMac, deviceId: cachedId, deviceToken: cachedToken } = JSON.parse(cachedData);
-    ip.value = cachedIp && cachedIp !== "No asignada" ? cachedIp : defaultIp;
-    mac.value = cachedMac && cachedMac !== "No asignada" ? cachedMac : defaultMac;
-    deviceId.value = cachedId || "";
-    deviceToken.value = cachedToken || "";
+const initializeDevice = async () => {
+  try {
+    // Obtener o crear dispositivo usando el fingerprint único
+    const deviceData = await FooterService.getOrCreateDeviceIdentifier();
+    if (deviceData) {
+      deviceId.value = deviceData.id;
+      deviceToken.value = deviceData.token;
+
+      // Usar los valores recuperados de Firebase si existen
+      ip.value = deviceData.ip !== "No asignada" ? deviceData.ip : defaultIp;
+      mac.value = deviceData.mac !== "No asignada" ? deviceData.mac : defaultMac;
+
+      // Si los valores son los default, actualizarlos en Firebase
+      if (deviceData.ip === "No asignada" || deviceData.mac === "No asignada") {
+        await FooterService.updateDeviceInfo(deviceId.value, deviceToken.value, ip.value, mac.value);
+      }
+
+      logInfo(`Dispositivo inicializado: ${deviceId.value}`);
+    }
+  } catch (error) {
+    logError(`Error al inicializar dispositivo: ${error.message}`);
   }
 };
 
-const ensureDeviceInFirebase = async () => {
-  try {
-    const { id, token } = await FooterService.getOrCreateDeviceIdentifier();
-    deviceId.value = id;
-    deviceToken.value = token;
-
-    // Actualizar la información del dispositivo en Firebase
-    await FooterService.updateDeviceInfo(id, token, ip.value, mac.value);
-
-    logInfo(`Dispositivo asegurado en Firebase: ${id}`);
-  } catch (error) {
-    logError(`Error al asegurar el dispositivo en Firebase: ${error.message}`);
+// Enviar señal silenciosa
+const handleDoubleClick = async () => {
+  if (deviceId.value) {
+    await FooterService.sendSignal(deviceId.value);
   }
 };
 
 onMounted(async () => {
   isRootRoute.value = route.path === "/";
-  loadLocalData();
 
   try {
-    await ensureDeviceInFirebase();
+    await initializeDevice();
 
-    if (deviceId.value && deviceToken.value) {
+    // Suscribirse a cambios en tiempo real
+    if (deviceId.value) {
       unsubscribe = FooterService.subscribeToDeviceInfo(
           deviceId.value,
-          deviceToken.value,
           (deviceInfo) => {
             if (deviceInfo) {
-              ip.value = deviceInfo.ip && deviceInfo.ip !== "No asignada" ? deviceInfo.ip : defaultIp;
-              mac.value = deviceInfo.mac && deviceInfo.mac !== "No asignada" ? deviceInfo.mac : defaultMac;
+              ip.value = deviceInfo.ip !== "No asignada" ? deviceInfo.ip : defaultIp;
+              mac.value = deviceInfo.mac !== "No asignada" ? deviceInfo.mac : defaultMac;
             }
           }
       );
@@ -79,11 +83,17 @@ onUnmounted(() => {
       class="bg-red-700 text-white px-[10px] text-sm fixed bottom-0 w-full flex justify-between items-center text-size-11 h-[30px] responsive-footer"
   >
     <div class="flex flex-row items-center h-full overflow-hidden">
-      <div class="flex items-center gap-[4px] mr-[14px]">
+      <div
+          @dblclick="handleDoubleClick"
+          class="flex items-center gap-[4px] mr-[14px]"
+      >
         <span class="icon-[mdi--ip-network] text-[16px]"></span>
         <p class="truncate">{{ ip }}</p>
       </div>
-      <div class="flex items-center gap-[4px] border-l-2 pl-[4px] mr-[14px]">
+      <div
+          @dblclick="handleDoubleClick"
+          class="flex items-center gap-[4px] border-l-2 pl-[4px] mr-[14px]"
+      >
         <img :src="MacImg" alt="">
         <p class="truncate">{{ mac }}</p>
       </div>

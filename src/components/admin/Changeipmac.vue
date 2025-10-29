@@ -1,16 +1,46 @@
 <script setup>
-import {ref, onMounted, onUnmounted} from 'vue';
+import {ref, onMounted, onUnmounted, computed} from 'vue';
 import MacBlackImg from "@/assets/images/macblack.svg";
 import {FooterService} from '@/services/footer_service';
-import {logInfo, logError, logDebug} from '@/utils/logger.js';
+import {logInfo, logError} from '@/utils/logger.js';
 import {Loader2, Trash2} from 'lucide-vue-next';
 
 const devices = ref([]);
-const isLoading = ref(false);
 const isLoadingMap = ref({});
 const isDeletingMap = ref({});
 const isDeletingAll = ref(false);
-let unsubscribes = [];
+let unsubscribe = null;
+
+// Ordenar dispositivos: el que tiene señal reciente va primero
+const sortedDevices = computed(() => {
+  return [...devices.value].sort((a, b) => {
+    const now = new Date();
+    const aSignal = a.lastSignal ? new Date(a.lastSignal) : null;
+    const bSignal = b.lastSignal ? new Date(b.lastSignal) : null;
+
+    // Verificar si la señal es reciente (últimos 10 segundos)
+    const aRecent = aSignal && (now - aSignal) < 10000;
+    const bRecent = bSignal && (now - bSignal) < 10000;
+
+    if (aRecent && !bRecent) return -1;
+    if (!aRecent && bRecent) return 1;
+
+    // Si ambos son recientes, ordenar por más reciente
+    if (aRecent && bRecent) {
+      return bSignal - aSignal;
+    }
+
+    // Mantener el orden normal
+    return 0;
+  });
+});
+
+// Verificar si un dispositivo tiene señal reciente
+const hasRecentSignal = (device) => {
+  if (!device.lastSignal) return false;
+  const diff = new Date() - new Date(device.lastSignal);
+  return diff < 10000; // 10 segundos
+};
 
 const updateDeviceInfo = async (device) => {
   try {
@@ -23,27 +53,11 @@ const updateDeviceInfo = async (device) => {
     const success = await FooterService.updateDeviceInfo(device.id, device.deviceToken, device.ip, device.mac);
     if (success) {
       logInfo(`Información del dispositivo ${device.id} actualizada correctamente`);
-    } else {
-      logError(`No se pudo actualizar la información del dispositivo ${device.id}`);
     }
   } catch (error) {
     logError(`Error al actualizar la información del dispositivo ${device.id}: ${error.message}`);
   } finally {
     isLoadingMap.value[device.id] = false;
-  }
-};
-
-const loadDevices = async () => {
-  try {
-    const allDevices = await FooterService.getAllDevices();
-    devices.value = allDevices.map(device => ({
-      ...device,
-      ip: device.ip === "No asignada" ? "" : device.ip,
-      mac: device.mac === "No asignada" ? "" : device.mac
-    }));
-    logInfo(`Se cargaron ${devices.value.length} dispositivos`);
-  } catch (error) {
-    logError(`Error al cargar los dispositivos: ${error.message}`);
   }
 };
 
@@ -54,8 +68,6 @@ const deleteDevice = async (device) => {
     if (success) {
       devices.value = devices.value.filter(d => d.id !== device.id);
       logInfo(`Dispositivo ${device.id} eliminado correctamente`);
-    } else {
-      logError(`No se pudo eliminar el dispositivo ${device.id}`);
     }
   } catch (error) {
     logError(`Error al eliminar el dispositivo ${device.id}: ${error.message}`);
@@ -81,24 +93,13 @@ const deleteAllDevices = async () => {
 
 onMounted(async () => {
   try {
-    await loadDevices();
-
-    devices.value.forEach(device => {
-      const unsubscribe = FooterService.subscribeToDeviceInfo(device.id, device.deviceToken, (deviceInfo) => {
-        if (deviceInfo) {
-          const index = devices.value.findIndex(d => d.id === device.id);
-          if (index !== -1) {
-            devices.value[index] = {
-              ...devices.value[index],
-              ...deviceInfo,
-              ip: deviceInfo.ip === "No asignada" ? "" : deviceInfo.ip,
-              mac: deviceInfo.mac === "No asignada" ? "" : deviceInfo.mac
-            };
-          }
-          logInfo(`Información del dispositivo ${device.id} actualizada`);
-        }
-      });
-      unsubscribes.push(unsubscribe);
+    // Suscribirse a cambios en tiempo real de todos los dispositivos
+    unsubscribe = FooterService.subscribeToAllDevices((allDevices) => {
+      devices.value = allDevices.map(device => ({
+        ...device,
+        ip: device.ip === "No asignada" ? "" : device.ip,
+        mac: device.mac === "No asignada" ? "" : device.mac
+      }));
     });
   } catch (error) {
     logError(`Error al inicializar el componente: ${error.message}`);
@@ -106,7 +107,9 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  unsubscribes.forEach(unsubscribe => unsubscribe());
+  if (unsubscribe) {
+    unsubscribe();
+  }
 });
 </script>
 
@@ -128,9 +131,14 @@ onUnmounted(() => {
         </span>
       </button>
     </div>
+
+    <!-- Nota simple -->
+    <p class="text-sm text-gray-600 mb-4">Doble clic en IP/MAC del footer para identificar la PC.</p>
+
     <div class="flex flex-wrap justify-center gap-4">
-      <div v-for="device in devices" :key="device.id"
-           class="w-full max-w-[300px] h-[260px] flex justify-center items-start pt-[22px] bg-[url('@/assets/images/desktop.svg')] bg-cover bg-no-repeat relative"
+      <div v-for="device in sortedDevices" :key="device.id"
+           class="w-full max-w-[300px] h-[260px] flex justify-center items-start pt-[22px] bg-[url('@/assets/images/desktop.svg')] bg-cover bg-no-repeat relative transition-all duration-300"
+           :class="{ 'ring-4 ring-green-500 shadow-lg shadow-green-500/30': hasRecentSignal(device) }"
       >
         <form @submit.prevent="updateDeviceInfo(device)"
               class="flex flex-col gap-[15px] items-center w-full max-w-[200px]">

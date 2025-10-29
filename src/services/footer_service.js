@@ -1,74 +1,78 @@
 import { db } from './firebase';
-import { doc, setDoc, updateDoc, onSnapshot, collection, addDoc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, onSnapshot, collection, addDoc, getDoc, getDocs, deleteDoc, query, orderBy, where } from 'firebase/firestore';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
 export const FooterService = {
-    clearDeviceCache() {
-        localStorage.removeItem('deviceToken');
-        localStorage.removeItem('deviceId');
-        localStorage.removeItem('deviceInfo');
+    // Generar fingerprint único y consistente para cada PC
+    generateDeviceFingerprint() {
+        const navigator = window.navigator;
+        const screen = window.screen;
+
+        // Crear una huella digital más robusta
+        let fingerprint = '';
+        fingerprint += navigator.userAgent;
+        fingerprint += navigator.language;
+        fingerprint += navigator.platform;
+        fingerprint += navigator.hardwareConcurrency || 'unknown';
+        fingerprint += screen.colorDepth;
+        fingerprint += screen.width + 'x' + screen.height;
+        fingerprint += screen.pixelDepth || '';
+        fingerprint += new Date().getTimezoneOffset();
+
+        // Convertir a hash más corto y manejable
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+
+        // Convertir a string base36 para que sea más corto
+        return 'PC_' + Math.abs(hash).toString(36).toUpperCase();
     },
 
     async getOrCreateDeviceIdentifier() {
         try {
-            let deviceToken = localStorage.getItem('deviceToken');
-            let deviceId = localStorage.getItem('deviceId');
+            // Siempre usar el mismo fingerprint para esta PC
+            const deviceFingerprint = this.generateDeviceFingerprint();
 
-            if (deviceToken && deviceId) {
-                this.clearDeviceCache();
-            }
+            // Primero buscar si este fingerprint ya existe en Firebase
+            const deviceRef = doc(db, 'devices', deviceFingerprint);
+            const deviceDoc = await getDoc(deviceRef);
 
-            if (deviceId) {
-                const deviceRef = doc(db, 'devices', deviceId);
-                const deviceDoc = await getDoc(deviceRef);
-
-                if (deviceDoc.exists()) {
-                    deviceToken = deviceDoc.data().deviceToken;
-                    this.updateLocalStorage(deviceId, deviceToken, 'No asignada', 'No asignada');
-                    return { id: deviceId, token: deviceToken };
-                }
-            }
-
-            deviceToken = this.generateDeviceToken();
-            deviceId = this.generateDeviceId();
-
-            if (!this.isPrivateMode()) {
-                const devicesCollection = collection(db, 'devices');
-                const newDeviceRef = await addDoc(devicesCollection, {
+            if (deviceDoc.exists()) {
+                // Si existe, recuperar los datos guardados
+                const data = deviceDoc.data();
+                logInfo(`Dispositivo recuperado: ${deviceFingerprint}`);
+                return {
+                    id: deviceFingerprint,
+                    token: data.deviceToken,
+                    ip: data.ip || 'No asignada',
+                    mac: data.mac || 'No asignada'
+                };
+            } else {
+                // Si no existe, crear nueva entrada
+                const deviceToken = this.generateDeviceToken();
+                await setDoc(deviceRef, {
                     deviceToken,
                     ip: 'No asignada',
                     mac: 'No asignada',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    lastSignal: null
                 });
-                deviceId = newDeviceRef.id;
+
+                logInfo(`Nuevo dispositivo creado: ${deviceFingerprint}`);
+                return {
+                    id: deviceFingerprint,
+                    token: deviceToken,
+                    ip: 'No asignada',
+                    mac: 'No asignada'
+                };
             }
-
-            this.updateLocalStorage(deviceId, deviceToken, 'No asignada', 'No asignada');
-
-            return { id: deviceId, token: deviceToken };
         } catch (error) {
             logError(`Error al obtener/crear identificador de dispositivo: ${error.message}`);
             return null;
         }
-    },
-
-    updateLocalStorage(deviceId, deviceToken, ip, mac) {
-        localStorage.setItem('deviceToken', deviceToken);
-        localStorage.setItem('deviceId', deviceId);
-        localStorage.setItem('deviceInfo', JSON.stringify({ ip, mac, deviceId, deviceToken }));
-    },
-
-    generateDeviceId() {
-        const navigator = window.navigator;
-        const screen = window.screen;
-        let deviceId = '';
-
-        deviceId += navigator.userAgent.replace(/\D+/g, '');
-        deviceId += navigator.language;
-        deviceId += screen.colorDepth;
-        deviceId += screen.width + 'x' + screen.height;
-
-        return btoa(deviceId).slice(0, 20);
     },
 
     generateDeviceToken() {
@@ -79,13 +83,10 @@ export const FooterService = {
     },
 
     async getAllDevices() {
-        if (this.isPrivateMode()) {
-            return [];
-        }
-
         try {
             const devicesCollection = collection(db, 'devices');
-            const querySnapshot = await getDocs(devicesCollection);
+            const q = query(devicesCollection, orderBy('lastSignal', 'desc'));
+            const querySnapshot = await getDocs(q);
             const devices = [];
             querySnapshot.forEach((doc) => {
                 devices.push({ id: doc.id, ...doc.data() });
@@ -97,22 +98,32 @@ export const FooterService = {
         }
     },
 
-    subscribeToDeviceInfo(deviceId, deviceToken, callback) {
+    // Suscripción para todos los dispositivos en tiempo real
+    subscribeToAllDevices(callback) {
+        const devicesCollection = collection(db, 'devices');
+        const q = query(devicesCollection, orderBy('lastSignal', 'desc'));
+
+        return onSnapshot(q, (snapshot) => {
+            const devices = [];
+            snapshot.forEach((doc) => {
+                devices.push({ id: doc.id, ...doc.data() });
+            });
+            callback(devices);
+        }, (error) => {
+            logError(`Error en la suscripción de dispositivos: ${error.message}`);
+        });
+    },
+
+    subscribeToDeviceInfo(deviceId, callback) {
         if (typeof callback !== 'function') {
             logError('El callback proporcionado no es una función');
-            return () => {};
-        }
-
-        if (this.isPrivateMode()) {
             return () => {};
         }
 
         const docRef = doc(db, 'devices', deviceId);
         return onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
-                const data = doc.data();
-                this.updateLocalStorage(deviceId, deviceToken, data.ip, data.mac);
-                callback(data);
+                callback(doc.data());
             } else {
                 callback(null);
             }
@@ -122,47 +133,44 @@ export const FooterService = {
     },
 
     async updateDeviceInfo(deviceId, deviceToken, ip, mac) {
-        const updateData = {
-            ip,
-            mac,
-            lastUpdated: new Date().toISOString()
-        };
-
-        if (this.isPrivateMode()) {
-            this.updateLocalStorage(deviceId, deviceToken, ip, mac);
-            return true;
-        }
-
         try {
             const docRef = doc(db, 'devices', deviceId);
-            await updateDoc(docRef, updateData);
-            this.updateLocalStorage(deviceId, deviceToken, ip, mac);
+            await updateDoc(docRef, {
+                ip,
+                mac,
+                lastUpdated: new Date().toISOString()
+            });
             return true;
         } catch (error) {
-            logError(`Error al actualizar la información del dispositivo en Firebase: ${error.message}`);
+            logError(`Error al actualizar la información del dispositivo: ${error.message}`);
+            return false;
+        }
+    },
+
+    // Enviar señal de identificación
+    async sendSignal(deviceId) {
+        try {
+            const docRef = doc(db, 'devices', deviceId);
+            await updateDoc(docRef, {
+                lastSignal: new Date().toISOString()
+            });
+            logDebug(`Señal enviada desde dispositivo ${deviceId}`);
+            return true;
+        } catch (error) {
+            logError(`Error al enviar señal: ${error.message}`);
             return false;
         }
     },
 
     async deleteDevice(deviceId) {
-        if (this.isPrivateMode()) {
-            this.clearDeviceCache();
-            return true;
-        }
-
         try {
             const docRef = doc(db, 'devices', deviceId);
             await deleteDoc(docRef);
-            this.clearDeviceCache();
             logInfo(`Dispositivo ${deviceId} eliminado correctamente`);
             return true;
         } catch (error) {
             logError(`Error al eliminar el dispositivo ${deviceId}: ${error.message}`);
             return false;
         }
-    },
-
-    isPrivateMode() {
-        return !window.indexedDB;
     }
 };
