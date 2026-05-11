@@ -4,11 +4,15 @@
   "private": true,
   "scripts": {
     "build": "vite build",
+    "build:munilima": "vite build --mode munilima",
     "dev": "vite",
+    "dev:munilima": "vite --mode munilima",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:build": "tauri build",
-    "tauri:dev": "tauri dev"
+    "tauri:dev": "tauri dev",
+    "deploy:mtc": "npm run build && firebase deploy --only hosting:mtc",
+    "deploy:munilima": "npm run build:munilima && firebase deploy --only hosting:munilima"
   },
   "dependencies": {
     "@iconify/tailwind": "^1.2.0",

@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "simulador-81507"
-  }
+  },
+  "targets": {
+    "simulador-81507": {
+      "hosting": {
+        "mtc": [
+          "simulador-81507"
+        ],
+        "munilima": [
+          "eval-sys-7k3p"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

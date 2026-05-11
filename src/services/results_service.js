@@ -1,4 +1,4 @@
-import { db } from './firebase';
+import { dbSite as db } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { logInfo, logError } from '@/utils/logger.js';
 import { userService } from './user_service';

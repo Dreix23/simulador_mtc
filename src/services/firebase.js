@@ -19,13 +19,24 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
-// Inicializar Firestore con caché persistente multi-tab
+// DB compartida — siempre la (default), contiene questionnaire
 const db = initializeFirestore(app, {
     localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
     })
 });
 
+// DB específica del sitio — para users, examResults, devices
+// Si no hay variable de entorno, usa la misma DB (default) para retrocompatibilidad
+const siteDbId = import.meta.env.VITE_FIRESTORE_DB;
+const dbSite = siteDbId
+    ? initializeFirestore(app, {
+        localCache: persistentLocalCache({
+            tabManager: persistentMultipleTabManager()
+        })
+    }, siteDbId)
+    : db;
+
 const storage = getStorage(app);
 
-export { app, auth, db, analytics, storage };
+export { app, auth, db, dbSite, analytics, storage };
