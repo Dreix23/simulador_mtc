@@ -1,6 +1,7 @@
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { logError, logInfo, logDebug } from '@/utils/logger.js';
+import { isCategoryAllowed } from '@/utils/site_config.js';
 
 const CACHE_KEY = 'cachedAllQuestions';
 let unsubscribe = null;
@@ -54,7 +55,8 @@ const fetchAllQuestionsFromDB = () => {
                     TEMA: doc.data().TEMA,
                     CATEGORIA: doc.data().CATEGORIA
                 }))
-                .filter(question => question.ALTERNATIVA_4 && question.ALTERNATIVA_4.trim() !== '');
+                .filter(question => question.ALTERNATIVA_4 && question.ALTERNATIVA_4.trim() !== '')
+                .filter(question => isCategoryAllowed(question.CATEGORIA));
 
             saveToCache(allQuestions);
             logInfo(`Se actualizaron ${allQuestions.length} preguntas en la caché (se excluyeron las de 3 opciones)`);

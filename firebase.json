@@ -20,7 +20,7 @@
       ]
     },
     {
-      "target": "munilima",
+      "target": "evalsys",
       "public": "dist",
       "ignore": [
         "firebase.json",

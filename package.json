@@ -4,15 +4,15 @@
   "private": true,
   "scripts": {
     "build": "vite build",
-    "build:munilima": "vite build --mode munilima",
+    "build:evalsys": "vite build --mode evalsys",
     "dev": "vite",
-    "dev:munilima": "vite --mode munilima",
+    "dev:evalsys": "vite --mode evalsys",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:build": "tauri build",
     "tauri:dev": "tauri dev",
     "deploy:mtc": "npm run build && firebase deploy --only hosting:mtc",
-    "deploy:munilima": "npm run build:munilima && firebase deploy --only hosting:munilima"
+    "deploy:evalsys": "npm run build:evalsys && firebase deploy --only hosting:evalsys"
   },
   "dependencies": {
     "@iconify/tailwind": "^1.2.0",

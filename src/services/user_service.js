@@ -2,12 +2,13 @@ import { dbSite as db, storage } from './firebase.js';
 import { collection, addDoc, query, where, getDocs, deleteDoc, doc, Timestamp, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { logInfo, logError } from '@/utils/logger.js';
+import { allowedCategories } from '@/utils/site_config.js';
 import * as XLSX from 'xlsx';
 
 const CACHE_KEY = 'users_cache';
 
 const documentTypes = ["DNI", "CE", "CSR", "PTP", "CID"];
-const categories = ["AI", "BIIA", "BIIB", "AIIA", "AIIB", "AIIIA", "AIIIB", "AIIIC", "BIIC"];
+const categories = allowedCategories;
 
 export const userService = {
     async getUsers() {

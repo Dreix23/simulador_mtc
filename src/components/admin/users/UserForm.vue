@@ -6,6 +6,7 @@ import InputField from "@/elements/admin/users/InputField.vue";
 import ImageUpload from "@/elements/admin/users/ImageUpload.vue";
 import ExcelButtons from "@/elements/admin/users/ExcelButtons.vue";
 import { userService } from "@/services/user_service.js";
+import { allowedDisplayCategories, defaultCategory } from "@/utils/site_config.js";
 
 const props = defineProps({
   userToEdit: {
@@ -30,7 +31,7 @@ const newUser = ref({
   numeroDocumento: "",
   apellidos: "",
   nombre: "",
-  categoria: "AI",
+  categoria: defaultCategory,
   imagen: null,
 });
 
@@ -48,7 +49,7 @@ const resetForm = () => {
     numeroDocumento: "",
     apellidos: "",
     nombre: "",
-    categoria: "AI",
+    categoria: defaultCategory,
     imagen: null,
   };
   isEditing.value = false;
@@ -102,21 +103,9 @@ const handleImageUpload = (event) => {
   }
 };
 
-const categories = [
-  "A-I",
-  "BII-A",
-  "BII-B",
-  "AII-A",
-  "AII-B",
-  "AIII-A",
-  "AIII-B",
-  "AIII-C",
-  "BII-C",
-];
-
 const displayCategories = computed(() => {
-  return categories.map(category => ({
-    value: category.replace('-', ''),
+  return allowedDisplayCategories.map(category => ({
+    value: category.replace(/-/g, ''),
     label: category
   }));
 });
